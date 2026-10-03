@@ -403,6 +403,51 @@ td.ok { color: var(--ok); font-weight: 600; } td.no { color: var(--bad); font-we
 .vtm { border: 1.5px solid var(--c); background: var(--cs); border-radius: 6px; padding: 4px 8px; }
 </style>
 
+<style>
+.newtag { font: 600 10.5px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--ok); background: var(--ok-soft); padding: 3px 8px; border-radius: 999px; }
+.lg-new { background: var(--ok-soft); border-color: var(--ok) !important; }
+.rel-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+@media (max-width: 720px) { .rel-strip { grid-template-columns: minmax(0, 1fr); } }
+.rel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.rel p { margin: 8px 0 0; font-size: 14px; }
+.rel-k { font: 700 16px var(--font-display); margin-bottom: 10px; }
+.rel-d { display: flex; align-items: center; gap: 0; }
+.rel-d .node { font: 600 12px var(--font-mono); padding: 6px 8px; border-radius: 6px; border: 1.5px solid var(--accent); background: var(--accent-soft); white-space: nowrap; }
+.ln { flex: 1 1 auto; min-width: 24px; height: 2px; background: var(--fg); position: relative; }
+.ln.agg::before, .ln.comp::before { content: ""; position: absolute; left: -1px; top: 50%; width: 10px; height: 10px; transform: translateY(-50%) rotate(45deg); border: 2px solid var(--fg); background: var(--sheet); }
+.ln.comp::before { background: var(--fg); }
+.solid-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+@media (max-width: 640px) { .solid-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sl { display: grid; justify-items: center; text-align: center; gap: 2px; padding: 12px 6px; border-radius: 10px; border: 1.5px solid var(--accent); text-decoration: none; color: var(--fg); background: var(--accent-soft); }
+.sl b { font: 800 30px/1 var(--font-display); color: var(--accent); }
+.sl span { font-size: 13px; line-height: 1.3; }
+.sl:hover { background: var(--sheet); }
+.principle { border-top: 1.5px solid var(--line); margin-top: 22px; padding-top: 4px; scroll-margin-top: 72px; }
+.principle h3 { display: flex; gap: 10px; align-items: center; }
+.pl { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--accent); color: var(--sheet); font: 800 20px var(--font-display); flex: none; }
+.pdef { font-size: 17px; margin: 0; }
+.bad-good { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 10px; }
+.vs.stack { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 760px) { .bad-good { grid-template-columns: minmax(0, 1fr); } }
+.bad-good > div { min-width: 0; }
+.bad-good pre.cs { font-size: 12.5px; margin-top: 6px; }
+.bg-l { font: 600 12px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+.bg-l.no { color: var(--bad); } .bg-l.ok { color: var(--ok); }
+.ans { background: var(--code-bg); border-left: 3px solid var(--ok); padding: 8px 12px; border-radius: 0 6px 6px 0; margin-top: 12px; font-size: 15px; }
+.life { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+@media (max-width: 720px) { .life { grid-template-columns: minmax(0, 1fr); } }
+.lc { border: 1.5px solid var(--accent); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.lc > b { font: 700 18px var(--font-display); color: var(--accent); }
+.lc-sub { display: block; font: 12px var(--font-mono); color: var(--muted); }
+.lc p { margin: 8px 0 0; font-size: 14.5px; }
+.lc .lc-use { color: var(--muted); }
+.checklist { columns: 2 260px; column-gap: 24px; margin-top: 12px; padding: 0; list-style: none; }
+.checklist li { break-inside: avoid; padding: 3px 0; }
+.checklist a { color: var(--fg); text-decoration: none; border-bottom: 1px dashed var(--line); }
+.checklist a:hover { color: var(--accent); }
+.checklist .ck { color: var(--ok); font-weight: 700; margin-right: 6px; }
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -422,7 +467,16 @@ td.ok { color: var(--ok); font-weight: 600; } td.no { color: var(--bad); font-we
       <li><a href="#isas"><span>11</span>IS, AS</a></li>
       <li><a href="#access"><span>12</span>Access Modifiers</a></li>
       <li><a href="#props"><span>13</span>Properties</a></li>
-      <li><a href="#quiz"><span>14</span>Quiz</a></li>
+      <li><a href="#ctors"><span>14</span>Constructors &amp; Destructor</a></li>
+      <li><a href="#sealed"><span>15</span>sealed</a></li>
+      <li><a href="#absint"><span>16</span>Abstract vs Interface</a></li>
+      <li><a href="#objectclass"><span>17</span>object Class</a></li>
+      <li><a href="#initanon"><span>18</span>Initializer &amp; Anonymous</a></li>
+      <li><a href="#relations"><span>19</span>Association · Aggregation · Composition</a></li>
+      <li><a href="#compinh"><span>20</span>Composition vs Inheritance</a></li>
+      <li><a href="#solid"><span>21</span>SOLID</a></li>
+      <li><a href="#di"><span>22</span>Dependency Injection</a></li>
+      <li><a href="#quiz"><span>23</span>Quiz</a></li>
     </ol>
   </nav>
 
@@ -440,6 +494,7 @@ td.ok { color: var(--ok); font-weight: 600; } td.no { color: var(--bad); font-we
         <span><i class="lg-notes"></i>Plain text: your notes</span>
         <span><i class="lg-add"></i>Blue box: example or picture added</span>
         <span><i class="lg-fix"></i>Amber box: correction</span>
+        <span><i class="lg-new"></i>Green "New lesson" tag: chapters 14 to 22, written for you</span>
       </div>
     </header>
 
@@ -1998,23 +2053,839 @@ var emp = new Employee
       </table></div>
     </section>
 
-    <!-- 14 QUIZ -->
+    <!-- 14 CONSTRUCTORS -->
+    <section class="ch lesson" id="ctors">
+      <div class="ch-head"><span class="ch-no">14</span><h2>Constructors &amp; Destructor</h2><span class="newtag">New lesson</span></div>
+      <p class="lede">A constructor runs once, when the object is born, to put it in a valid state. A destructor (finalizer) runs when the garbage collector removes it.</p>
+
+      <h3>Types of constructors</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Type</th><th>What it is</th><th>When you use it</th></tr></thead>
+        <tbody>
+          <tr><td>Default</td><td>No parameters. The compiler adds one for you <b>only if you write no constructor at all</b>.</td><td>Simple objects, object initializers, serializers, EF Core</td></tr>
+          <tr><td>Parameterized</td><td>Takes values so the object starts valid</td><td>Required data: <code>new Employee(101, "Asha")</code></td></tr>
+          <tr><td>Copy (user-defined)</td><td>Takes another object of the same type and copies it. C# has no built-in one.</td><td>Cloning an object</td></tr>
+          <tr><td>Static</td><td>Runs once per type, called by the CLR (chapter 02)</td><td>Initialising static data</td></tr>
+          <tr><td>Private</td><td>Can't be called from outside the class</td><td>Singleton, factory methods, utility classes</td></tr>
+          <tr><td>Chaining</td><td><code>this(...)</code> or <code>base(...)</code> (chapters 04 and 05)</td><td>Avoid repeating setup code</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="add"><span class="tag">Example · all of them in one class</span>
+<pre class="cs">public class Employee
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public Address Address { get; set; }
+
+    public Employee() : this(0, "Unknown") { }                 // default (chains)
+
+    public Employee(int id, string name)                       // parameterized
+    {
+        Id = id;
+        Name = name;
+        Address = new Address();
+    }
+
+    public Employee(Employee other)                            // copy constructor
+    {
+        Id = other.Id;
+        Name = other.Name;
+        Address = new Address { City = other.Address.City };  // deep copy
+    }
+}</pre>
+      </div>
+      <div class="note fix"><span class="tag">Trap</span><p>The moment you write <i>any</i> constructor, the free default one disappears. If you add <code>Employee(int id)</code>, then <code>new Employee()</code> stops compiling until you write the parameterless one yourself.</p></div>
+      <div class="note key"><span class="tag">Shallow vs deep copy</span><p>Copying only the reference (<code>Address = other.Address</code>) is a <b>shallow copy</b>: both employees share one Address object, so changing one changes both. Creating a new Address is a <b>deep copy</b>. <code>MemberwiseClone()</code> gives you a shallow copy.</p></div>
+
+      <h3>Private constructor and Singleton</h3>
+<pre class="cs">public sealed class AppConfig
+{
+    private static readonly Lazy&lt;AppConfig&gt; _instance = new(() =&gt; new AppConfig());
+    public static AppConfig Instance =&gt; _instance.Value;
+
+    private AppConfig() { }          // nobody outside can call new AppConfig()
+}
+
+var cfg = AppConfig.Instance;        // always the same object
+// var x = new AppConfig();          // ✗ compile error</pre>
+      <p>In ASP.NET Core you rarely hand-write a singleton. You register the class with <code>AddSingleton</code> and let dependency injection keep one instance (chapter 22).</p>
+
+      <h3>Order of execution with inheritance</h3>
+      <p>For <code>new Manager()</code> where <code>Manager : Employee</code>, and both have static and instance members:</p>
+      <ol class="steps">
+        <li><span>Manager static field initializers, then Manager <b>static</b> constructor</span></li>
+        <li><span>Manager instance field initializers</span></li>
+        <li><span>Employee static field initializers, then Employee <b>static</b> constructor</span></li>
+        <li><span>Employee instance field initializers</span></li>
+        <li><span>Employee constructor body</span></li>
+        <li><span>Manager constructor body</span></li>
+      </ol>
+      <p>Easy way to remember: <b>initializers run child → parent, constructor bodies run parent → child.</b> Static constructors run only the first time.</p>
+
+      <h3>Destructor (Finalizer)</h3>
+<pre class="cs">public class Employee
+{
+    ~Employee()                                    // no access modifier, no parameters
+    {
+        Console.WriteLine("Employee object is being destroyed.");
+    }
+}</pre>
+      <ul>
+        <li>Called by the <b>Garbage Collector</b>, not by you. You can't predict <i>when</i>.</li>
+        <li>One per class, no parameters, no access modifier, can't be overloaded or inherited.</li>
+        <li>Objects with a finalizer are slower to collect: they survive one extra GC cycle and get promoted to an older generation.</li>
+        <li>Only needed for <b>unmanaged</b> resources (raw file handles, native memory). Almost never in normal web code.</li>
+      </ul>
+
+      <h3>IDisposable and using: deterministic cleanup</h3>
+<pre class="cs">public class ReportWriter : IDisposable
+{
+    private readonly StreamWriter _writer = new("report.txt");
+
+    public void Write(string line) =&gt; _writer.WriteLine(line);
+
+    public void Dispose()
+    {
+        _writer.Dispose();                 // release the file NOW
+        GC.SuppressFinalize(this);         // no need for the finalizer to run
+    }
+}
+
+using (var w = new ReportWriter())         // Dispose() is called at the end, even on exception
+{
+    w.Write("Salary report");
+}
+
+using var conn = new SqlConnection(cs);    // C# 8: disposed at the end of the method</pre>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Finalizer <code>~Employee()</code></th><th><code>Dispose()</code></th></tr></thead>
+        <tbody>
+          <tr><td>Who calls it</td><td>Garbage Collector</td><td>You, or <code>using</code></td></tr>
+          <tr><td>When</td><td>Unknown, some time later</td><td>Immediately, when you decide</td></tr>
+          <tr><td>Use for</td><td>Safety net for unmanaged resources</td><td>DB connections, files, streams, HttpResponse</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Can a constructor be private? Virtual? Static?</summary><div class="a"><p>Private: yes (singleton, factory). Virtual: no, constructors are never virtual or inherited. Static: yes, but only one, with no parameters and no access modifier.</p></div></details>
+        <details><summary>What happens if Dispose is not called?</summary><div class="a"><p>The resource (DB connection, file handle) stays open until the GC eventually runs the finalizer, if there is one. Under load this exhausts the connection pool or locks files. That's why we always use <code>using</code>.</p></div></details>
+        <details><summary>Finalize vs Dispose?</summary><div class="a"><p>Dispose is deterministic and called by your code. Finalize is non-deterministic and called by the GC. The Dispose pattern uses both: Dispose does the work and calls <code>GC.SuppressFinalize(this)</code>; the finalizer is only a backup for unmanaged resources.</p></div></details>
+        <details><summary>Why is a parameterless constructor needed for EF Core or JSON deserialization?</summary><div class="a"><p>The framework creates the object first and sets properties afterwards. EF Core and System.Text.Json can also use parameterized constructors when the parameter names match the properties.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 15 SEALED -->
+    <section class="ch lesson" id="sealed">
+      <div class="ch-head"><span class="ch-no">15</span><h2>sealed Class &amp; sealed Method</h2><span class="newtag">New lesson</span></div>
+      <p class="lede"><code>sealed</code> means "the inheritance chain stops here."</p>
+      <div class="grid2">
+        <div>
+          <h3>sealed class</h3>
+          <p>No class can inherit from it. You can still create objects of it.</p>
+<pre class="cs">public sealed class PayrollCalculator { }
+
+// class MyCalc : PayrollCalculator { }   // ✗ compile error</pre>
+          <p>Built-in example: <code>string</code> is sealed.</p>
+        </div>
+        <div>
+          <h3>sealed method</h3>
+          <p>Used with <code>override</code> to stop <b>further</b> overriding down the chain.</p>
+<pre class="cs">class Employee      { public virtual void Work() { } }
+class Manager       : Employee { public sealed override void Work() { } }
+class SeniorManager : Manager
+{
+    // public override void Work() { }    // ✗ Work is sealed in Manager
+}</pre>
+        </div>
+      </div>
+      <h3>Why seal?</h3>
+      <ul>
+        <li><b>Design intent</b>: the class was not built to be extended, so nobody can break it by overriding.</li>
+        <li><b>Security</b>: stop someone changing the behaviour of sensitive logic (validation, pricing).</li>
+        <li><b>Performance</b>: the JIT can call methods directly instead of through the vtable (devirtualization).</li>
+      </ul>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Can we create an object of a sealed class?</summary><div class="a"><p>Yes. Sealed only blocks inheritance, not instantiation. (A <code>static</code> class blocks both.)</p></div></details>
+        <details><summary>Can we seal a method that is not an override?</summary><div class="a"><p>No. <code>sealed</code> on a method is only allowed together with <code>override</code>. A non-virtual method can't be overridden anyway.</p></div></details>
+        <details><summary>Can a class be both abstract and sealed?</summary><div class="a"><p>No, they contradict each other: abstract must be inherited, sealed can't be. Internally, a <code>static</code> class is compiled as abstract + sealed, but you can't write that yourself.</p></div></details>
+        <details><summary>sealed vs private constructor vs static class?</summary><div class="a"><p>sealed: objects allowed, inheritance blocked. Private constructor: no outside <code>new</code>, and inheritance blocked in practice. Static class: no objects and no inheritance, only static members.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 16 ABSTRACT VS INTERFACE -->
+    <section class="ch lesson" id="absint">
+      <div class="ch-head"><span class="ch-no">16</span><h2>Abstract Class vs Interface</h2><span class="newtag">New lesson</span></div>
+      <p class="lede">An abstract class is a <b>half-built base</b> (shared code plus blanks to fill in). An interface is a <b>contract</b>: a list of things a class promises it can do.</p>
+
+<pre class="cs">public abstract class Employee                     // IS-A: every employee shares this
+{
+    protected Employee(string name) { Name = name; }   // abstract classes CAN have constructors
+    public string Name { get; }
+    protected decimal BaseSalary = 50000;              // and fields
+
+    public decimal CalculateTax() =&gt; CalculatePay() * 0.10m;   // shared code
+    public abstract decimal CalculatePay();                    // blank to fill in
+}
+
+public interface IReviewable { void Review(); }        // CAN-DO: a capability
+public interface IPayable    { decimal CalculatePay(); }
+
+public class Manager : Employee, IReviewable           // one class + many interfaces
+{
+    public Manager(string name) : base(name) { }
+    public override decimal CalculatePay() =&gt; BaseSalary + 20000;
+    public void Review() =&gt; Console.WriteLine($"{Name} reviews the team");
+}</pre>
+
+      <h3>Side by side</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Feature</th><th>Abstract class</th><th>Interface</th></tr></thead>
+        <tbody>
+          <tr><td>Relationship</td><td>IS-A (Manager is an Employee)</td><td>CAN-DO (Manager can be reviewed)</td></tr>
+          <tr><td>Inheritance</td><td>A class can inherit only <b>one</b></td><td>A class can implement <b>many</b></td></tr>
+          <tr><td>Fields (state)</td><td>Yes</td><td>No instance fields</td></tr>
+          <tr><td>Constructor</td><td>Yes (called through <code>base(...)</code>)</td><td>No</td></tr>
+          <tr><td>Method bodies</td><td>Yes, plus abstract methods</td><td>Only signatures, except C# 8+ default methods</td></tr>
+          <tr><td>Access modifiers</td><td>Any</td><td>Members are public by default</td></tr>
+          <tr><td>Instantiate?</td><td>No</td><td>No</td></tr>
+          <tr><td>Works with structs?</td><td>No</td><td>Yes, a struct can implement interfaces</td></tr>
+          <tr><td>Best for</td><td>Related classes sharing code</td><td>Unrelated classes sharing a capability, DI, mocking</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Which one should I pick?</h3>
+      <div class="grid2">
+        <div class="note key" style="margin-top:0"><span class="tag">Abstract class when</span><p>The classes are closely related (Manager, Developer are all Employees) and share real code or state, such as Name or CalculateTax().</p></div>
+        <div class="note key" style="margin-top:0"><span class="tag">Interface when</span><p>You define a capability that unrelated classes can have (<code>IPayable</code> for Employee <i>and</i> Vendor), you need multiple inheritance, or you want to inject and mock it (<code>IEmployeeRepository</code>).</p></div>
+      </div>
+      <p style="margin-top:14px">In real ASP.NET Core projects you use <b>interfaces</b> far more often, because DI and unit testing are built around them. A common pattern combines both: an interface for the contract, and an abstract base class implementing it to share code.</p>
+
+      <h3>Multiple interface inheritance</h3>
+<pre class="cs">public interface IWorker   { void Work(); }
+public interface ILeader   { void Lead(); }
+public interface ITeamLead : IWorker, ILeader { }   // an interface can extend many interfaces
+
+public class TeamLead : Developer, ITeamLead
+{
+    public void Lead() { }
+    // Work() comes from Developer
+}</pre>
+
+      <h3>Same method in two interfaces: explicit implementation</h3>
+<pre class="cs">public interface IEmailNotifier { void Send(); }
+public interface ISmsNotifier   { void Send(); }
+
+public class Notifier : IEmailNotifier, ISmsNotifier
+{
+    void IEmailNotifier.Send() =&gt; Console.WriteLine("Email");   // explicit
+    void ISmsNotifier.Send()   =&gt; Console.WriteLine("SMS");
+}
+
+var n = new Notifier();
+// n.Send();                       // ✗ not visible on the class
+((IEmailNotifier)n).Send();        // Email
+((ISmsNotifier)n).Send();          // SMS</pre>
+
+      <h3>Modern C# (8+): default interface methods</h3>
+<pre class="cs">public interface ILogger
+{
+    void Log(string msg);
+    void LogError(string msg) =&gt; Log("ERROR: " + msg);   // body inside the interface
+}</pre>
+      <p>This lets library authors add a member to an interface without breaking every existing implementation. It does <b>not</b> give interfaces state; they still can't have instance fields.</p>
+
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Why use an interface instead of an abstract class?</summary><div class="a"><p>A class can implement many interfaces but inherit one class; interfaces keep coupling loose, so they are what we inject with DI and mock in unit tests; and unrelated types (even structs) can share them. Use an abstract class when related classes need shared code or state.</p></div></details>
+        <details><summary>Can an abstract class have a constructor? Why, if you can't create it?</summary><div class="a"><p>Yes. It runs when a derived object is created (through <code>base(...)</code>) to initialise the shared fields. Make it <code>protected</code>.</p></div></details>
+        <details><summary>Can an abstract class implement an interface without implementing its methods?</summary><div class="a"><p>Yes. It can declare them <code>abstract</code> and leave them to the derived class.</p></div></details>
+        <details><summary>After default interface methods, is there any difference left?</summary><div class="a"><p>Yes: interfaces still have no instance fields, no constructors, and no protected state, and a class can still inherit only one class. The IS-A vs CAN-DO design difference stays the same.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 17 OBJECT CLASS -->
+    <section class="ch lesson" id="objectclass">
+      <div class="ch-head"><span class="ch-no">17</span><h2>The object Class</h2><span class="newtag">New lesson</span></div>
+      <p class="lede"><code>System.Object</code> is the root of every type in .NET. Every class, struct, int and string inherits its members, which is why you can call <code>.ToString()</code> on anything.</p>
+      <div class="tree">
+        <div class="node">System.Object</div>
+        <div class="vline"></div>
+        <div class="kids">
+          <div class="kid"><div class="node">Employee<small>your classes</small></div></div>
+          <div class="kid"><div class="node">string</div></div>
+          <div class="kid"><div class="node">ValueType<small>int, struct, enum</small></div></div>
+        </div>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Member</th><th>Default behaviour</th><th>Override?</th></tr></thead>
+        <tbody>
+          <tr><td><code>ToString()</code></td><td>Returns the full type name, e.g. <code>"HR.Employee"</code></td><td>Yes, for readable output and logs</td></tr>
+          <tr><td><code>Equals(object)</code></td><td>Classes: same reference? Structs: same field values?</td><td>Yes, when you want value equality</td></tr>
+          <tr><td><code>GetHashCode()</code></td><td>Classes: based on identity</td><td>Always together with Equals</td></tr>
+          <tr><td><code>GetType()</code></td><td>The runtime type of the object</td><td>No (not virtual)</td></tr>
+          <tr><td><code>ReferenceEquals(a, b)</code></td><td>Static. Same object in memory?</td><td>No (static, can't override)</td></tr>
+          <tr><td><code>MemberwiseClone()</code></td><td>Protected. Shallow copy.</td><td>Call it from your own Clone method</td></tr>
+          <tr><td><code>Finalize()</code></td><td>Protected. The <code>~Employee()</code> destructor.</td><td>Through destructor syntax only</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>ToString()</h3>
+<pre class="cs">var e = new Employee(101, "Asha");
+Console.WriteLine(e);                  // HR.Employee   (default)
+
+public override string ToString() =&gt; $"#{Id} {Name}";
+Console.WriteLine(e);                  // #101 Asha     (Console.WriteLine calls ToString)</pre>
+
+      <h3>Equals()</h3>
+<pre class="cs">var a = new Employee(101, "Asha");
+var b = new Employee(101, "Asha");
+
+Console.WriteLine(a.Equals(b));        // False: two different objects (reference equality)
+
+public override bool Equals(object? obj) =&gt;
+    obj is Employee other &amp;&amp; Id == other.Id;   // now "same Id" means equal
+
+Console.WriteLine(a.Equals(b));        // True</pre>
+
+      <h3>GetHashCode()</h3>
+      <p>Dictionary and HashSet first look up an object by its hash code, then confirm with Equals. So the golden rule is: <b>if two objects are Equal, they must return the same hash code.</b></p>
+<pre class="cs">public override int GetHashCode() =&gt; Id.GetHashCode();
+// for several fields: HashCode.Combine(Id, Name)</pre>
+      <div class="note fix"><span class="tag">Classic bug</span><p>Override <code>Equals</code> but forget <code>GetHashCode</code>, and <code>new HashSet&lt;Employee&gt; { a, b }</code> keeps <b>both</b> "equal" employees, and <code>dict[b]</code> can't find a value stored under <code>a</code>. The compiler warns you (CS0659). Also, don't base the hash on fields that change after the object is put in a dictionary.</p></div>
+
+      <h3>ReferenceEquals()</h3>
+<pre class="cs">var a = new Employee(101, "Asha");
+var b = new Employee(101, "Asha");
+var c = a;
+
+object.ReferenceEquals(a, b);    // False: different objects, even though Equals is True
+object.ReferenceEquals(a, c);    // True: same object
+object.ReferenceEquals(5, 5);    // False: each int is boxed into a new object</pre>
+
+      <h3>== vs Equals()</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Type</th><th><code>==</code></th><th><code>Equals()</code></th></tr></thead>
+        <tbody>
+          <tr><td>Your class (no overloads)</td><td>Reference</td><td>Reference (until you override)</td></tr>
+          <tr><td><code>string</code></td><td>Value (overloaded)</td><td>Value</td></tr>
+          <tr><td><code>int</code>, other primitives</td><td>Value</td><td>Value</td></tr>
+          <tr><td><code>record</code></td><td>Value (generated)</td><td>Value (generated)</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Senior tip: records do all of this for you</h3>
+<pre class="cs">public record EmployeeDto(int Id, string Name);
+
+var a = new EmployeeDto(101, "Asha");
+var b = new EmployeeDto(101, "Asha");
+a == b;               // True: value equality generated
+a.ToString();         // EmployeeDto { Id = 101, Name = Asha }
+var c = a with { Name = "Ravi" };   // non-destructive copy</pre>
+      <p>Records generate <code>Equals</code>, <code>GetHashCode</code>, <code>==</code> and <code>ToString</code>. They are ideal for DTOs and value objects.</p>
+
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Why must GetHashCode be overridden when Equals is?</summary><div class="a"><p>Hash-based collections use GetHashCode to find the bucket and Equals to confirm. If equal objects return different hash codes, they land in different buckets, so lookups fail and duplicates appear.</p></div></details>
+        <details><summary>Can two different objects have the same hash code?</summary><div class="a"><p>Yes, that is a collision and it's allowed. Equal objects must have equal hash codes, but equal hash codes don't mean equal objects.</p></div></details>
+        <details><summary>Difference between Equals and ReferenceEquals?</summary><div class="a"><p>Equals is virtual and can be overridden for value equality. ReferenceEquals is static and always checks if both references point to the same object.</p></div></details>
+        <details><summary>How does a struct compare with Equals by default?</summary><div class="a"><p><code>ValueType.Equals</code> compares all fields, using reflection when it must, which is slow. Override Equals (or implement <code>IEquatable&lt;T&gt;</code>) on structs used heavily in comparisons.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 18 OBJECT INITIALIZER & ANONYMOUS -->
+    <section class="ch lesson" id="initanon">
+      <div class="ch-head"><span class="ch-no">18</span><h2>Object Initializer &amp; Anonymous Object</h2><span class="newtag">New lesson</span></div>
+      <h3>Object Initializer</h3>
+      <p class="lede">Set properties right after creating the object, in one readable statement.</p>
+<pre class="cs">// without
+var e = new Employee();
+e.Id = 101;
+e.Name = "Asha";
+e.Department = "IT";
+
+// with an object initializer
+var e = new Employee { Id = 101, Name = "Asha", Department = "IT" };
+
+// with a constructor + initializer, nested object, and collection initializer
+var m = new Manager(101)
+{
+    Name = "Asha",
+    Address = new Address { City = "Pune" },
+    Team = { new Developer { Name = "Ravi" }, new Developer { Name = "Meena" } }
+};</pre>
+      <ol class="steps">
+        <li><span>The constructor runs first (the parameterless one if you write only <code>{ }</code>).</span></li>
+        <li><span>Then each property is assigned, in the order written.</span></li>
+        <li><span>It works with <code>set</code> and <code>init</code> properties, but not get-only ones (chapter 13).</span></li>
+      </ol>
+
+      <h3>Anonymous Object</h3>
+      <p class="lede">An object with no class name. The compiler creates the class for you.</p>
+<pre class="cs">var emp = new { Id = 101, Name = "Asha", Salary = 50000m };
+Console.WriteLine(emp.Name);       // Asha
+// emp.Name = "Ravi";              // ✗ properties are read-only
+
+// most common use: LINQ projections
+var list = employees
+    .Where(e =&gt; e.Salary &gt; 40000)
+    .Select(e =&gt; new { e.Name, e.Department })   // property names inferred
+    .ToList();</pre>
+      <ul>
+        <li>The type is generated by the compiler, is <b>sealed</b>, and derives from <code>object</code>.</li>
+        <li>Properties are <b>read-only</b>. C# 10 lets you copy with <code>emp with { Name = "Ravi" }</code>.</li>
+        <li>Two anonymous objects with the same property names, types and order share one type, and <b>Equals compares values</b>.</li>
+        <li>You must use <code>var</code>, and you can't return one as a typed result from a method. For that, use a class, a <code>record</code> or a tuple.</li>
+      </ul>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Object initializer vs constructor?</summary><div class="a"><p>A constructor enforces required data and runs logic. An initializer is just property assignment after construction, which is more readable for many optional values. Use constructors (or <code>required</code>/<code>init</code> properties) for mandatory data.</p></div></details>
+        <details><summary>Anonymous type vs tuple vs record?</summary><div class="a"><p>Anonymous types: method-local, read-only, great in LINQ. Tuples <code>(int Id, string Name)</code>: lightweight value types you can return from methods. Records: named types with value equality, for DTOs shared across the app.</p></div></details>
+      </div>
+    </section>
+    <!-- 19 RELATIONSHIPS -->
+    <section class="ch lesson" id="relations">
+      <div class="ch-head"><span class="ch-no">19</span><h2>Association, Aggregation, Composition</h2><span class="newtag">New lesson</span></div>
+      <p class="lede">These describe how two objects are connected. They go from loose to strong: <b>uses</b> → <b>has</b> → <b>owns</b>.</p>
+
+      <div class="rel-strip">
+        <div class="rel"><div class="rel-k">Association</div><div class="rel-d"><span class="node">Manager</span><span class="ln"></span><span class="node">LeaveRequest</span></div><p><b>uses / knows</b>. Both live independently.</p></div>
+        <div class="rel"><div class="rel-k">Aggregation</div><div class="rel-d"><span class="node">Department</span><span class="ln agg"></span><span class="node">Employee</span></div><p><b>has-a</b>, weak. The part survives without the whole.</p></div>
+        <div class="rel"><div class="rel-k">Composition</div><div class="rel-d"><span class="node">Employee</span><span class="ln comp"></span><span class="node">IdCard</span></div><p><b>owns-a</b>, strong. The part dies with the whole.</p></div>
+      </div>
+      <p class="cap">UML symbols: plain line = association, hollow diamond ◇ = aggregation, filled diamond ◆ = composition (the diamond sits on the "whole" side).</p>
+
+      <h3>1. Association: "uses"</h3>
+      <p>Two objects work together, but neither owns the other. Often the other object just arrives as a method parameter.</p>
+<pre class="cs">public class Manager : Employee
+{
+    public void Approve(LeaveRequest request)     // Manager USES a LeaveRequest
+    {
+        request.Status = "Approved";
+    }
+}
+// The request existed before the call and still exists after it.</pre>
+
+      <h3>2. Aggregation: "has-a" (weak)</h3>
+      <p>A whole that holds parts, but the parts are created <b>outside</b> and can live on their own.</p>
+<pre class="cs">public class Department
+{
+    public string Name { get; }
+    public List&lt;Employee&gt; Employees { get; } = new();
+
+    public Department(string name) =&gt; Name = name;
+    public void Add(Employee e) =&gt; Employees.Add(e);   // employee passed IN
+}
+
+var asha = new Employee(101, "Asha");
+var it = new Department("IT");
+it.Add(asha);
+it = null;          // department gone, Asha still exists and can join another department</pre>
+
+      <h3>3. Composition: "owns-a" (strong)</h3>
+      <p>The whole <b>creates</b> the part itself and never shares it. When the whole goes, the part goes too.</p>
+<pre class="cs">public class Employee
+{
+    private readonly IdCard _idCard;               // owned
+
+    public Employee(int id, string name)
+    {
+        _idCard = new IdCard(id);                  // created INSIDE
+    }
+}
+// No IdCard exists without its Employee. When the Employee is collected,
+// nothing else references the IdCard, so it is collected too.</pre>
+
+      <h3>Comparison</h3>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Association</th><th>Aggregation</th><th>Composition</th></tr></thead>
+        <tbody>
+          <tr><td>Meaning</td><td>uses / knows</td><td>has-a (weak)</td><td>owns-a, part-of (strong)</td></tr>
+          <tr><td>Ownership</td><td>None</td><td>Whole holds parts, doesn't own them</td><td>Whole owns parts</td></tr>
+          <tr><td>Lifetime</td><td>Independent</td><td>Part can outlive the whole</td><td>Part dies with the whole</td></tr>
+          <tr><td>Who creates the part</td><td>Someone else</td><td>Someone else, passed in</td><td>The whole, inside itself</td></tr>
+          <tr><td>Code clue</td><td>Method parameter</td><td>Constructor/method parameter, list field</td><td><code>new</code> inside the class, private field</td></tr>
+          <tr><td>UML</td><td>— line</td><td>◇ hollow diamond</td><td>◆ filled diamond</td></tr>
+          <tr><td>Real life</td><td>Doctor ↔ Patient</td><td>Team ↔ Player</td><td>House ◆ Room</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note key"><span class="tag">Remember</span><p>Aggregation and composition are both special kinds of association. Ask one question: <b>"If I delete the whole, does the part still make sense?"</b> Yes → aggregation. No → composition.</p></div>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Give a real project example of each.</summary><div class="a"><p>Association: an <code>OrderService</code> method receives a <code>Customer</code>. Aggregation: a <code>Cart</code> holds <code>Product</code>s that exist in the catalogue anyway. Composition: an <code>Order</code> owns its <code>OrderLine</code>s; deleting the order deletes its lines (cascade delete in the database).</p></div></details>
+        <details><summary>How does C# enforce composition if the GC frees memory?</summary><div class="a"><p>Through design, not keywords: the whole creates the part privately and never exposes or shares it. Then nothing else references the part, so it is collected with the whole. If the part holds resources, the whole disposes it in its own Dispose.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 20 COMPOSITION VS INHERITANCE -->
+    <section class="ch lesson" id="compinh">
+      <div class="ch-head"><span class="ch-no">20</span><h2>Composition vs Inheritance</h2><span class="newtag">New lesson</span></div>
+      <p class="lede"><b>Inheritance = IS-A.</b> A Manager <i>is an</i> Employee. <b>Composition = HAS-A.</b> An Employee <i>has a</i> pay calculator. The well-known advice is "favour composition over inheritance".</p>
+
+      <h3>The problem with inheritance everywhere</h3>
+<pre class="cs">class Employee { }
+class FullTimeEmployee           : Employee { }   // pay rule
+class ContractEmployee           : Employee { }
+class RemoteFullTimeEmployee     : FullTimeEmployee { }   // + location rule
+class RemoteContractEmployee     : ContractEmployee { }
+class RemoteContractEmployeeWithShiftAllowance : RemoteContractEmployee { }   // 😬
+// every new combination = a new class. Changing Employee can break all of them.</pre>
+      <ul>
+        <li><b>Class explosion</b>: each combination of behaviours needs its own subclass.</li>
+        <li><b>Tight coupling / fragile base class</b>: a change in Employee ripples into every child.</li>
+        <li><b>Fixed at compile time</b>: an employee can't switch from contract to full-time at runtime.</li>
+        <li><b>Only one parent</b> in C#, so you can't mix two bases.</li>
+      </ul>
+
+      <h3>The same thing with composition</h3>
+<pre class="cs">public interface IPayPolicy      { decimal Calculate(decimal baseSalary); }
+public interface ILocationPolicy { decimal Allowance(); }
+
+public class FullTimePay : IPayPolicy { public decimal Calculate(decimal b) =&gt; b; }
+public class ContractPay : IPayPolicy { public decimal Calculate(decimal b) =&gt; b * 1.2m; }
+public class RemoteWork  : ILocationPolicy { public decimal Allowance() =&gt; 2000; }
+public class OfficeWork  : ILocationPolicy { public decimal Allowance() =&gt; 0; }
+
+public class Employee
+{
+    private IPayPolicy _pay;                 // HAS-A
+    private readonly ILocationPolicy _location;
+
+    public Employee(IPayPolicy pay, ILocationPolicy location)
+    {
+        _pay = pay;
+        _location = location;
+    }
+
+    public decimal MonthlyPay(decimal baseSalary) =&gt;
+        _pay.Calculate(baseSalary) + _location.Allowance();
+
+    public void ConvertToFullTime() =&gt; _pay = new FullTimePay();   // swap at runtime
+}
+
+var e = new Employee(new ContractPay(), new RemoteWork());   // any combination, no new class</pre>
+
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Inheritance (IS-A)</th><th>Composition (HAS-A)</th></tr></thead>
+        <tbody>
+          <tr><td>Relationship</td><td>Manager is an Employee</td><td>Employee has an IPayPolicy</td></tr>
+          <tr><td>Coupling</td><td>Tight: child depends on parent's internals</td><td>Loose: depends on an interface</td></tr>
+          <tr><td>Flexibility</td><td>Fixed at compile time</td><td>Swap parts at runtime</td></tr>
+          <tr><td>Reuse</td><td>White-box (child sees protected members)</td><td>Black-box (only the public contract)</td></tr>
+          <tr><td>Testing</td><td>Harder: must deal with the base class</td><td>Easy: inject a fake IPayPolicy</td></tr>
+          <tr><td>Polymorphism</td><td>Through virtual/override</td><td>Through interfaces</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note key"><span class="tag">When inheritance is still right</span><p>When the IS-A is true in every situation, the child can be used anywhere the parent is (Liskov, chapter 21), and you really want to share code. Framework examples: <code>ControllerBase</code>, <code>DbContext</code>, <code>Exception</code>.</p></div>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Why favour composition over inheritance?</summary><div class="a"><p>It avoids class explosion and fragile base classes, keeps classes loosely coupled through interfaces, lets you change behaviour at runtime, and makes unit testing easy because collaborators can be mocked. It's also exactly how DI works in ASP.NET Core.</p></div></details>
+        <details><summary>How do you decide between them?</summary><div class="a"><p>Say the sentence out loud. "Manager <b>is an</b> Employee" → inheritance. "Employee <b>has a</b> pay policy" → composition. If the "is-a" is only true sometimes, or you're inheriting just to reuse a method, use composition.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 21 SOLID -->
+    <section class="ch lesson" id="solid">
+      <div class="ch-head"><span class="ch-no">21</span><h2>SOLID Principles</h2><span class="newtag">New lesson</span></div>
+      <p class="lede">Five design rules that keep code easy to change. For 4+ years of experience, expect to explain each with a <b>problem → fix</b> from your own projects.</p>
+      <div class="solid-row">
+        <a href="#srp" class="sl"><b>S</b><span>Single Responsibility</span></a>
+        <a href="#ocp" class="sl"><b>O</b><span>Open / Closed</span></a>
+        <a href="#lsp" class="sl"><b>L</b><span>Liskov Substitution</span></a>
+        <a href="#isp" class="sl"><b>I</b><span>Interface Segregation</span></a>
+        <a href="#dip" class="sl"><b>D</b><span>Dependency Inversion</span></a>
+      </div>
+
+      <article class="principle" id="srp">
+        <h3><span class="pl">S</span>Single Responsibility Principle (SRP)</h3>
+        <p class="pdef">A class should have <b>only one reason to change</b>.</p>
+        <div class="bad-good">
+          <div><div class="bg-l no">✗ Violates</div>
+<pre class="cs">public class EmployeeService
+{
+    public decimal CalculateSalary(Employee e) { ... }   // payroll rules
+    public void Save(Employee e) { ... }                 // SQL
+    public void SendPayslipEmail(Employee e) { ... }     // SMTP
+}
+// changes to tax rules, DB, or email all edit this class</pre></div>
+          <div><div class="bg-l ok">✓ Follows</div>
+<pre class="cs">public class SalaryCalculator   { public decimal Calculate(Employee e) { ... } }
+public class EmployeeRepository { public void Save(Employee e) { ... } }
+public class PayslipEmailer     { public void Send(Employee e) { ... } }
+// each class has one job and one reason to change</pre></div>
+        </div>
+        <p class="ans"><b>Say it:</b> "Each class does one job. In my API, controllers only handle HTTP, services hold business logic, and repositories talk to the database."</p>
+      </article>
+
+      <article class="principle" id="ocp">
+        <h3><span class="pl">O</span>Open/Closed Principle (OCP)</h3>
+        <p class="pdef">Open for <b>extension</b>, closed for <b>modification</b>. Add new behaviour by adding code, not by editing working code.</p>
+        <div class="bad-good">
+          <div><div class="bg-l no">✗ Violates</div>
+<pre class="cs">public decimal Bonus(Employee e)
+{
+    if (e.Type == "Manager")   return e.Salary * 0.20m;
+    if (e.Type == "Developer") return e.Salary * 0.10m;
+    // new role "Tester"? edit this method again...
+    return 0;
+}</pre></div>
+          <div><div class="bg-l ok">✓ Follows</div>
+<pre class="cs">public abstract class Employee
+{
+    public decimal Salary { get; set; }
+    public abstract decimal Bonus();
+}
+public class Manager   : Employee { public override decimal Bonus() =&gt; Salary * 0.20m; }
+public class Developer : Employee { public override decimal Bonus() =&gt; Salary * 0.10m; }
+public class Tester    : Employee { public override decimal Bonus() =&gt; Salary * 0.08m; }  // just add</pre></div>
+        </div>
+        <p class="ans"><b>Say it:</b> "Instead of growing if/switch chains, I use polymorphism or the Strategy pattern, so a new case is a new class. ASP.NET Core middleware and filters work this way too."</p>
+      </article>
+
+      <article class="principle" id="lsp">
+        <h3><span class="pl">L</span>Liskov Substitution Principle (LSP)</h3>
+        <p class="pdef">A child class must be usable <b>anywhere its parent is expected</b>, without surprises.</p>
+        <div class="bad-good">
+          <div><div class="bg-l no">✗ Violates</div>
+<pre class="cs">public class Employee
+{
+    public virtual int PaidLeaveDays() =&gt; 24;
+}
+public class Contractor : Employee
+{
+    public override int PaidLeaveDays() =&gt;
+        throw new NotSupportedException();   // surprise!
+}
+
+foreach (Employee e in staff)
+    total += e.PaidLeaveDays();              // crashes on a Contractor</pre></div>
+          <div><div class="bg-l ok">✓ Follows</div>
+<pre class="cs">public abstract class Worker { public string Name { get; set; } }
+
+public interface IHasPaidLeave { int PaidLeaveDays(); }
+
+public class Employee   : Worker, IHasPaidLeave { public int PaidLeaveDays() =&gt; 24; }
+public class Contractor : Worker { }         // doesn't pretend to have paid leave
+
+foreach (var e in staff.OfType&lt;IHasPaidLeave&gt;())
+    total += e.PaidLeaveDays();</pre></div>
+        </div>
+        <p class="ans"><b>Say it:</b> "If a subclass throws NotImplementedException or ignores the parent's rules, the hierarchy is wrong. The classic example is Square inheriting Rectangle: setting the width also changes the height, which breaks code written for Rectangle."</p>
+      </article>
+
+      <article class="principle" id="isp">
+        <h3><span class="pl">I</span>Interface Segregation Principle (ISP)</h3>
+        <p class="pdef">Don't force a class to implement methods it doesn't use. Prefer <b>small, focused interfaces</b>.</p>
+        <div class="bad-good">
+          <div><div class="bg-l no">✗ Violates</div>
+<pre class="cs">public interface IEmployee
+{
+    void Work();
+    void ApproveLeave();
+    void WriteCode();
+    void ConductInterview();
+}
+public class Developer : IEmployee
+{
+    public void Work() { }
+    public void WriteCode() { }
+    public void ApproveLeave()     =&gt; throw new NotImplementedException();
+    public void ConductInterview() =&gt; throw new NotImplementedException();
+}</pre></div>
+          <div><div class="bg-l ok">✓ Follows</div>
+<pre class="cs">public interface IWorker      { void Work(); }
+public interface IApprover    { void ApproveLeave(); }
+public interface ICoder       { void WriteCode(); }
+public interface IInterviewer { void ConductInterview(); }
+
+public class Developer : IWorker, ICoder { ... }
+public class Manager   : IWorker, IApprover, IInterviewer { ... }</pre></div>
+        </div>
+        <p class="ans"><b>Say it:</b> "Clients should depend only on what they use. I split fat repositories into IReadRepository and IWriteRepository, for example, so reporting code can't write."</p>
+      </article>
+
+      <article class="principle" id="dip">
+        <h3><span class="pl">D</span>Dependency Inversion Principle (DIP)</h3>
+        <p class="pdef">High-level modules should not depend on low-level modules. <b>Both should depend on abstractions</b> (interfaces).</p>
+        <div class="bad-good">
+          <div><div class="bg-l no">✗ Violates</div>
+<pre class="cs">public class PayrollService
+{
+    private readonly SqlEmployeeRepository _repo
+        = new SqlEmployeeRepository();      // hard-wired to SQL
+    private readonly SmtpEmailSender _mail
+        = new SmtpEmailSender();            // hard-wired to SMTP
+
+    public void Run() { ... }
+}
+// can't switch to another DB, can't unit test without a real DB</pre></div>
+          <div><div class="bg-l ok">✓ Follows</div>
+<pre class="cs">public interface IEmployeeRepository { IEnumerable&lt;Employee&gt; GetAll(); }
+public interface IEmailSender         { void Send(string to, string body); }
+
+public class PayrollService
+{
+    private readonly IEmployeeRepository _repo;
+    private readonly IEmailSender _mail;
+
+    public PayrollService(IEmployeeRepository repo, IEmailSender mail)
+    {
+        _repo = repo;          // given from outside (chapter 22)
+        _mail = mail;
+    }
+}</pre></div>
+        </div>
+        <div class="tree" style="margin-top:14px">
+          <div class="node">PayrollService<small>high level</small></div>
+          <div class="vline"></div>
+          <div class="node iface">IEmployeeRepository<small>abstraction</small></div>
+          <div class="vline"></div>
+          <div class="kids">
+            <div class="kid"><div class="node child">SqlEmployeeRepository</div></div>
+            <div class="kid"><div class="node child">FakeEmployeeRepository<small>for tests</small></div></div>
+          </div>
+        </div>
+        <p class="ans"><b>Say it:</b> "My services depend on interfaces, and the DI container supplies the real class. That's how I swap Dapper for EF Core, or a real repository for a mock in unit tests."</p>
+      </article>
+
+      <h3>SOLID in one table</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Letter</th><th>Principle</th><th>One line</th><th>Smell that breaks it</th></tr></thead>
+        <tbody>
+          <tr><td><b>S</b></td><td>Single Responsibility</td><td>One class, one reason to change</td><td>"God" service with 2,000 lines</td></tr>
+          <tr><td><b>O</b></td><td>Open/Closed</td><td>Extend by adding, not editing</td><td>Growing switch on a type field</td></tr>
+          <tr><td><b>L</b></td><td>Liskov Substitution</td><td>Child works wherever the parent works</td><td>Override that throws NotSupportedException</td></tr>
+          <tr><td><b>I</b></td><td>Interface Segregation</td><td>Small, focused interfaces</td><td>Implementations full of empty methods</td></tr>
+          <tr><td><b>D</b></td><td>Dependency Inversion</td><td>Depend on interfaces, not concrete classes</td><td><code>new SqlRepository()</code> inside a service</td></tr>
+        </tbody>
+      </table></div>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Which SOLID principle have you applied most, and how?</summary><div class="a"><p>Prepare one real story. A strong one for a web developer: "Our OrderService did validation, pricing, saving and emails (SRP violation). I split it into a validator, a pricing strategy per customer type (OCP), and a repository and notifier behind interfaces injected with DI (DIP). Unit tests became easy because I could mock the repository."</p></div></details>
+        <details><summary>Is DIP the same as Dependency Injection?</summary><div class="a"><p>No. DIP is the <b>principle</b> (depend on abstractions). DI is a <b>technique</b> to achieve it (pass dependencies in from outside). IoC is the broader idea that a framework, not your class, controls object creation.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 22 DI -->
+    <section class="ch lesson" id="di">
+      <div class="ch-head"><span class="ch-no">22</span><h2>Dependency Injection</h2><span class="newtag">New lesson</span></div>
+      <p class="lede">Instead of a class creating the objects it needs with <code>new</code>, they are <b>given to it</b> from outside, usually through the constructor. ASP.NET Core has a DI container built in.</p>
+
+      <div class="vs stack">
+        <div class="vs-col ovr">
+          <h4 class="vs-title">Without DI</h4>
+<pre class="cs">public class EmployeesController : ControllerBase
+{
+    private readonly EmployeeService _service = new EmployeeService(
+        new SqlEmployeeRepository("Server=..."));   // builds its own dependencies
+
+    // tightly coupled, connection string inside,
+    // impossible to unit test without a database
+}</pre>
+        </div>
+        <div class="vs-col hide">
+          <h4 class="vs-title">With DI (constructor injection)</h4>
+<pre class="cs">public class EmployeesController : ControllerBase
+{
+    private readonly IEmployeeService _service;
+
+    public EmployeesController(IEmployeeService service)
+    {
+        _service = service;          // the container passes it in
+    }
+
+    [HttpGet]
+    public IActionResult Get() =&gt; Ok(_service.GetAll());
+}</pre>
+        </div>
+      </div>
+
+      <h3>Registering services (Program.cs)</h3>
+<pre class="cs">var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped&lt;IEmployeeRepository, EmployeeRepository&gt;();
+builder.Services.AddScoped&lt;IEmployeeService, EmployeeService&gt;();
+builder.Services.AddSingleton&lt;ICacheService, MemoryCacheService&gt;();
+builder.Services.AddTransient&lt;IEmailSender, SmtpEmailSender&gt;();
+
+var app = builder.Build();</pre>
+      <ol class="steps">
+        <li><span>A request hits <code>EmployeesController</code>. The container sees it needs an <code>IEmployeeService</code>.</span></li>
+        <li><span>It looks up the registration: <code>IEmployeeService</code> → <code>EmployeeService</code>.</span></li>
+        <li><span><code>EmployeeService</code> needs an <code>IEmployeeRepository</code>, so the container builds that first.</span></li>
+        <li><span>It creates the objects bottom-up, injects them, and disposes scoped ones when the request ends.</span></li>
+      </ol>
+
+      <h3>Service lifetimes</h3>
+      <div class="life">
+        <div class="lc"><b>Transient</b><span class="lc-sub">AddTransient</span><p>A <b>new object every time</b> it is requested, even twice in one request.</p><p class="lc-use">Lightweight, stateless helpers: email builder, mappers.</p></div>
+        <div class="lc"><b>Scoped</b><span class="lc-sub">AddScoped</span><p><b>One object per HTTP request</b>, shared by everyone in that request.</p><p class="lc-use">DbContext, repositories, unit of work, per-request user info.</p></div>
+        <div class="lc"><b>Singleton</b><span class="lc-sub">AddSingleton</span><p><b>One object for the whole app</b>, shared by every request and thread.</p><p class="lc-use">Configuration, memory cache, HttpClient factory. Must be thread-safe.</p></div>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Within…</th><th>Transient</th><th>Scoped</th><th>Singleton</th></tr></thead>
+        <tbody>
+          <tr><td>Same request, asked twice</td><td>2 objects</td><td>1 object</td><td>1 object</td></tr>
+          <tr><td>Two different requests</td><td>new each time</td><td>2 objects</td><td>1 object</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note fix"><span class="tag">Classic trap: captive dependency</span><p>Never inject a <b>Scoped</b> service (like DbContext) into a <b>Singleton</b>. The singleton lives forever, so it keeps the first request's DbContext alive and shares it across threads, which causes stale data and concurrency errors. In Development, ASP.NET Core throws "Cannot consume scoped service from singleton". Rule: a service may depend only on services that live <b>as long or longer</b> than itself.</p></div>
+
+      <h3>Three ways to inject</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Type</th><th>How</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td>Constructor</td><td><code>public X(IRepo repo)</code></td><td>The default, for required dependencies</td></tr>
+          <tr><td>Method</td><td><code>public IActionResult Get([FromServices] IRepo repo)</code></td><td>Needed by one action only</td></tr>
+          <tr><td>Property</td><td><code>public ILogger Logger { get; set; }</code></td><td>Optional dependencies; not supported by the built-in container</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Why it matters: unit testing</h3>
+<pre class="cs">var fakeRepo = new Mock&lt;IEmployeeRepository&gt;();
+fakeRepo.Setup(r =&gt; r.GetAll()).Returns(new[] { new Employee(1, "Asha") });
+
+var service = new EmployeeService(fakeRepo.Object);   // no database needed
+Assert.Single(service.GetAll());</pre>
+
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>When would you use Scoped instead of Singleton?</summary><div class="a"><p>When the service holds per-request state or isn't thread-safe, like DbContext or a repository using it. Singleton is for stateless or thread-safe shared things like configuration or a cache.</p></div></details>
+        <details><summary>DI vs IoC vs DIP?</summary><div class="a"><p>DIP: the principle, depend on abstractions. IoC: the idea that something else controls object creation and flow. DI: the concrete technique, where dependencies are passed in, usually by a container.</p></div></details>
+        <details><summary>What happens if two implementations are registered for the same interface?</summary><div class="a"><p>Constructor injection of <code>IEmailSender</code> gets the <b>last</b> one registered. Inject <code>IEnumerable&lt;IEmailSender&gt;</code> to get all of them. .NET 8 added keyed services (<code>AddKeyedScoped</code>) to pick one by key.</p></div></details>
+        <details><summary>How do you use a scoped service inside a singleton or background service?</summary><div class="a"><p>Inject <code>IServiceScopeFactory</code>, create a scope with <code>using var scope = factory.CreateScope()</code>, and resolve the scoped service from <code>scope.ServiceProvider</code>.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 23 QUIZ -->
     <section class="ch" id="quiz">
-      <div class="ch-head"><span class="ch-no">14</span><h2>Quiz</h2></div>
-      <p class="lede">Ten questions on the traps above. Tap an answer to see why.</p>
+      <div class="ch-head"><span class="ch-no">23</span><h2>Quiz</h2></div>
+      <p class="lede">Eighteen questions on the traps above. Tap an answer to see why.</p>
       <div class="quiz" id="quizBox"></div>
-      <div class="score" style="margin-top:16px"><span>Score <span class="n" id="scoreN">0 / 10</span></span><button class="btn" id="resetQuiz" type="button">Start over</button></div>
+      <div class="score" style="margin-top:16px"><span>Score <span class="n" id="scoreN">0 / 18</span></span><button class="btn" id="resetQuiz" type="button">Start over</button></div>
     </section>
 
     <section class="ch" id="next">
-      <div class="ch-head"><span class="ch-no">→</span><h2>Next in your roadmap</h2></div>
-      <div class="road">
-        <span>sealed class &amp; method</span><span>virtual vs override vs new</span><span>Abstract class vs Interface</span>
-        <span>Constructors: default, parameterized, copy, private, chaining</span><span>Destructor (Finalizer)</span>
-        <span>object: ToString, Equals, GetHashCode, ReferenceEquals</span><span>Object Initializer</span><span>Anonymous Object</span>
-        <span>Association · Aggregation · Composition</span><span>Composition vs Inheritance</span>
-        <span>SOLID</span><span>Dependency Injection</span>
-      </div>
+      <div class="ch-head"><span class="ch-no">✓</span><h2>OOPs checklist</h2></div>
+      <p>Everything on your OOPs roadmap is now in this guide.</p>
+      <ul class="checklist">
+        <li><span class="ck">✓</span><a href="#class">Class, Object, Class vs Object</a></li>
+        <li><span class="ck">✓</span><a href="#stack-heap">Stack vs Heap memory</a></li>
+        <li><span class="ck">✓</span><a href="#static">Static members, class, constructor</a></li>
+        <li><span class="ck">✓</span><a href="#inherit">Inheritance and its types</a></li>
+        <li><span class="ck">✓</span><a href="#base">base keyword</a></li>
+        <li><span class="ck">✓</span><a href="#this">this keyword, constructor chaining</a></li>
+        <li><span class="ck">✓</span><a href="#encap">Encapsulation</a></li>
+        <li><span class="ck">✓</span><a href="#abstract">Abstraction</a></li>
+        <li><span class="ck">✓</span><a href="#poly">Polymorphism, overloading, overriding</a></li>
+        <li><span class="ck">✓</span><a href="#hide-vs-override">virtual vs override vs new</a></li>
+        <li><span class="ck">✓</span><a href="#upcast">Upcasting</a> and <a href="#downcast">Downcasting</a></li>
+        <li><span class="ck">✓</span><a href="#isas">is and as</a></li>
+        <li><span class="ck">✓</span><a href="#access">Access modifiers (all six)</a></li>
+        <li><span class="ck">✓</span><a href="#props">Properties, fields vs properties</a></li>
+        <li><span class="ck">✓</span><a href="#ctors">Constructor types, destructor, IDisposable</a></li>
+        <li><span class="ck">✓</span><a href="#sealed">sealed class and method</a></li>
+        <li><span class="ck">✓</span><a href="#absint">Abstract class vs Interface, multiple interfaces</a></li>
+        <li><span class="ck">✓</span><a href="#objectclass">object class: ToString, Equals, GetHashCode, ReferenceEquals</a></li>
+        <li><span class="ck">✓</span><a href="#initanon">Object initializer, anonymous object</a></li>
+        <li><span class="ck">✓</span><a href="#relations">Association, Aggregation, Composition</a></li>
+        <li><span class="ck">✓</span><a href="#compinh">Composition vs Inheritance (HAS-A vs IS-A)</a></li>
+        <li><span class="ck">✓</span><a href="#solid">SOLID principles</a></li>
+        <li><span class="ck">✓</span><a href="#di">Dependency Injection and lifetimes</a></li>
+      </ul>
     </section>
 
     <footer>All text outside the blue and amber boxes is copied from the OOPs tab of your "Learning" doc. Your doc's screenshots couldn't be exported, so the blue boxes are new examples written to match them.</footer>
@@ -2023,7 +2894,7 @@ var emp = new Employee
 <script>
 (function () {
   // tiny C# highlighter
-  var KW = "public|private|protected|internal|static|class|interface|abstract|virtual|override|new|void|int|string|decimal|bool|return|if|else|foreach|in|var|get|set|init|this|base|throw|null|true|false|using|sealed|readonly|const|object|long";
+  var KW = "public|private|protected|internal|static|class|interface|abstract|virtual|override|new|void|int|string|decimal|bool|return|if|else|foreach|in|var|get|set|init|this|base|throw|null|true|false|using|sealed|readonly|const|object|long|record|struct|event|with|out|ref|is|as|typeof|required|private|protected|internal";
   var re = new RegExp('(//[^\\n]*)|("(?:[^"\\\\]|\\\\.)*")|\\b(' + KW + ')\\b|\\b([A-Z][A-Za-z0-9]*)\\b', 'g');
   function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function hl(src) {
@@ -2119,7 +2990,15 @@ var emp = new Employee
     { q: "Employee has `private decimal _salary`. In Manager : Employee, the field is…", o: ["Not inherited at all", "Inherited but not accessible from Manager's code", "Inherited and accessible"], a: 1, why: "It exists inside every Manager object; only Employee's code can touch it." },
     { q: "How many times does a static constructor run?", o: ["Once per object", "Once, before first use of the type", "Every time a static method is called"], a: 1, why: "The CLR runs it once, before the first instance or static member access." },
     { q: "Salary is protected in Employee. In Program.cs, which line compiles?", code: 'var m = new Manager();\nm.ShowSalary();   // A: public method in Manager\nm.Salary = 1;     // B', o: ["Only A", "Only B", "Both"], a: 0, why: "Manager can read Salary inside its own method, but Program is not derived from Employee." },
-    { q: "Which constructor initializers are allowed on one constructor?", o: ["this(...) and base(...) together", "Only one of this(...) or base(...)", "Neither, the compiler adds them"], a: 1, why: "A constructor gets exactly one initializer." }
+    { q: "Which constructor initializers are allowed on one constructor?", o: ["this(...) and base(...) together", "Only one of this(...) or base(...)", "Neither, the compiler adds them"], a: 1, why: "A constructor gets exactly one initializer." },
+    { q: "You inject a Scoped DbContext into a Singleton service. What's the problem?", o: ["Nothing, it works fine", "Captive dependency: one DbContext lives forever and is shared across requests", "The DbContext becomes Transient"], a: 1, why: "A service should only depend on services that live as long or longer. ASP.NET Core throws in Development." },
+    { q: "Employee overrides Equals (same Id = equal) but not GetHashCode. What can go wrong?", o: ["Nothing", "HashSet and Dictionary treat equal employees as different", "It won't compile"], a: 1, why: "Equal objects must return equal hash codes, or hash lookups fail. You get warning CS0659." },
+    { q: "Contractor overrides PaidLeaveDays() and throws NotSupportedException. Which SOLID principle is broken?", o: ["SRP", "OCP", "LSP"], a: 2, why: "A child must be usable wherever the parent is. Throwing breaks callers written for Employee." },
+    { q: "Every new role means editing a big switch in CalculateBonus(). Which principle is broken?", o: ["Open/Closed", "Interface Segregation", "Dependency Inversion"], a: 0, why: "New behaviour should be added with new code (a new class), not by modifying working code." },
+    { q: "An Order creates its OrderLines internally and deleting the order deletes them. This is…", o: ["Association", "Aggregation", "Composition"], a: 2, why: "The whole owns the part and the part dies with it." },
+    { q: "Can an abstract class have a constructor?", o: ["No, it can't be instantiated", "Yes, it runs when a derived object is created", "Only a static one"], a: 1, why: "Derived classes call it through base(...) to set up shared state." },
+    { q: "Can you create an object of a sealed class?", o: ["Yes", "No", "Only through reflection"], a: 0, why: "sealed blocks inheritance, not instantiation. string is sealed and you create strings all the time." },
+    { q: "Two records `new Emp(1, \"Asha\")` are created. `a == b` and `ReferenceEquals(a, b)` are…", o: ["true and true", "true and false", "false and false"], a: 1, why: "Records generate value equality for ==, but they are still two separate objects in memory." }
   ];
   var box = document.getElementById("quizBox"), scoreEl = document.getElementById("scoreN"), score = 0;
   function tick(s) { return s.replace(/`([^`]+)`/g, function (_, c) { return "<code>" + c.replace(/</g, "&lt;") + "</code>"; }); }
