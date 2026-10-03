@@ -1,0 +1,2166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OOPs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a blueprint sheet. Sticky chapter rail on the left (top bar on phones), one reading column, drafting-grid background, code and memory diagrams as "drawings". */
+:root {
+  --bg: #eef3f8;
+  --sheet: #ffffff;
+  --grid: rgba(37, 84, 160, 0.07);
+  --fg: #172235;
+  --muted: #5a6880;
+  --line: #d3dce8;
+  --accent: #2554a0;
+  --accent-soft: #e3ecf8;
+  --warn: #b25e09;
+  --warn-soft: #fbf0e2;
+  --ok: #1d7a4c;
+  --ok-soft: #e2f3ea;
+  --bad: #b42b39;
+  --bad-soft: #fbe6e8;
+  --code-bg: #f4f7fb;
+  --kw: #6b38b5;
+  --ty: #0f7a86;
+  --str: #a14d0b;
+  --com: #7a8699;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1524; --sheet: #121c2f; --grid: rgba(120, 165, 235, 0.06);
+    --fg: #e3eaf5; --muted: #93a1b8; --line: #263450;
+    --accent: #7eaaf0; --accent-soft: #1a2a48;
+    --warn: #f0a75a; --warn-soft: #33240f;
+    --ok: #5fcf95; --ok-soft: #12301f;
+    --bad: #f07a86; --bad-soft: #3a1a20;
+    --code-bg: #0f1828; --kw: #c49af5; --ty: #5fd0dc; --str: #f0b27a; --com: #6f7d95;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1524; --sheet: #121c2f; --grid: rgba(120, 165, 235, 0.06);
+  --fg: #e3eaf5; --muted: #93a1b8; --line: #263450;
+  --accent: #7eaaf0; --accent-soft: #1a2a48;
+  --warn: #f0a75a; --warn-soft: #33240f;
+  --ok: #5fcf95; --ok-soft: #12301f;
+  --bad: #f07a86; --bad-soft: #3a1a20;
+  --code-bg: #0f1828; --kw: #c49af5; --ty: #5fd0dc; --str: #f0b27a; --com: #6f7d95;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.wrap {
+  max-width: 1120px; margin: 0 auto;
+  padding-inline: 16px; padding-block: 24px 64px;
+  display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px;
+}
+@media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
+
+/* rail */
+nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; }
+nav.rail .label { font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+nav.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: ch; }
+nav.rail a {
+  display: flex; gap: 10px; align-items: baseline; text-decoration: none; color: var(--muted);
+  padding: 5px 10px; border-radius: 6px; font-size: 14px; line-height: 1.35;
+}
+nav.rail a span { font: 12px var(--font-mono); color: var(--accent); min-width: 18px; font-variant-numeric: tabular-nums; }
+nav.rail a:hover, nav.rail a.active { background: var(--accent-soft); color: var(--fg); }
+nav.rail a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 860px) {
+  nav.rail { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; margin-inline: -16px; padding-inline: 16px; border-bottom: 1px solid var(--line); }
+  nav.rail .label { display: none; }
+  nav.rail ol { display: flex; overflow-x: auto; gap: 4px; scrollbar-width: none; }
+  nav.rail a { white-space: nowrap; }
+}
+
+main { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+
+/* hero */
+.hero { padding-block: 8px 4px; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+h1 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.02; letter-spacing: -0.02em; margin: 12px 0 14px; text-wrap: balance;
+}
+.hero p { max-width: 62ch; color: var(--muted); margin: 0; font-size: 17px; }
+.cast { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.cast .who {
+  font: 500 13px var(--font-mono); padding: 6px 12px; border: 1.5px dashed var(--accent);
+  border-radius: 4px; color: var(--accent); background: var(--sheet);
+}
+.cast .who b { font-weight: 600; }
+
+/* chapters */
+section.ch {
+  background: var(--sheet); border: 1px solid var(--line); border-radius: 10px;
+  padding: clamp(18px, 3vw, 32px); scroll-margin-top: 72px; min-width: 0;
+}
+.ch-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.ch-no { font: 600 13px var(--font-mono); color: var(--accent); font-variant-numeric: tabular-nums; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px); line-height: 1.1; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-weight: 700; font-size: 19px; margin: 26px 0 8px; }
+.lede { font-size: 18px; max-width: 64ch; margin: 10px 0 0; }
+p { max-width: 68ch; }
+.ch p, .ch li { max-width: 68ch; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line); }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+@media (max-width: 640px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.grid2 > * { min-width: 0; }
+
+pre.cs {
+  margin: 14px 0 0; padding: 14px 16px; background: var(--code-bg); border: 1px solid var(--line);
+  border-radius: 8px; overflow-x: auto; font: 13.5px/1.55 var(--font-mono); color: var(--fg); tab-size: 4;
+}
+pre.cs .k { color: var(--kw); font-weight: 600; }
+pre.cs .t { color: var(--ty); }
+pre.cs .s { color: var(--str); }
+pre.cs .c { color: var(--com); font-style: italic; }
+.file { font: 600 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 16px 0 -8px; }
+
+/* callouts */
+.note { margin-top: 16px; padding: 12px 16px; border-radius: 8px; border: 1px solid; max-width: 72ch; }
+.note .tag { display: block; font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.note p { margin: 0; }
+.note.fix { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.note.fix .tag { color: var(--warn); }
+.note.key { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.note.key .tag { color: var(--accent); }
+
+/* interview reveal */
+.qa { margin-top: 18px; display: grid; gap: 8px; }
+.qa > .label { font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); }
+summary { cursor: pointer; padding: 10px 14px; font-weight: 600; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "Q"; font: 600 12px var(--font-mono); color: var(--accent); }
+details[open] summary { border-bottom: 1px dashed var(--line); }
+details .a { padding: 10px 14px 12px 34px; }
+details .a p { margin: 0 0 6px; }
+
+/* memory diagram */
+.mem { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 14px; margin-top: 16px; align-items: stretch; }
+@media (max-width: 560px) { .mem { grid-template-columns: minmax(0, 1fr); } }
+.zone { border: 1.5px dashed var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+.zone .zl { font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.ref, .obj { font: 13px/1.4 var(--font-mono); border-radius: 6px; padding: 8px 10px; }
+.ref { background: var(--code-bg); border: 1px solid var(--line); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ref em { font-style: normal; color: var(--accent); }
+.obj { background: var(--accent-soft); border: 1.5px solid var(--accent); margin-bottom: 8px; }
+.obj b { display: block; color: var(--accent); margin-bottom: 4px; }
+.obj .dim { color: var(--muted); }
+
+/* tables */
+.tbl { overflow-x: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--code-bg); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+
+/* access matrix */
+.am-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.chip {
+  font: 500 13px var(--font-mono); padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--sheet); color: var(--fg);
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--sheet); }
+.am-world { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+@media (max-width: 560px) { .am-world { grid-template-columns: minmax(0, 1fr); } }
+.asm { border: 1.5px dashed var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 8px; align-content: start; }
+.asm .zl { font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.spot { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); font-size: 14px; transition: background .2s, border-color .2s; }
+.spot .st { font: 600 12px var(--font-mono); white-space: nowrap; }
+.spot.yes { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.spot.yes .st { color: var(--ok); }
+.spot.no { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
+.spot.no .st { color: var(--bad); }
+.am-say { margin-top: 12px; font-size: 15px; }
+
+/* polymorphism lab */
+.lab { margin-top: 16px; border: 1.5px solid var(--accent); border-radius: 10px; overflow: hidden; }
+.lab-bar { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 14px; background: var(--accent-soft); align-items: center; }
+.lab-bar .grp { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.lab-bar .gl { font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.lab-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0; }
+@media (max-width: 640px) { .lab-body { grid-template-columns: minmax(0, 1fr); } }
+.lab-body pre.cs { margin: 0; border: 0; border-radius: 0; height: 100%; }
+.console { padding: 14px 16px; background: var(--sheet); border-left: 1px solid var(--line); font: 13.5px/1.5 var(--font-mono); min-width: 0; }
+@media (max-width: 640px) { .console { border-left: 0; border-top: 1px solid var(--line); } }
+.console .zl { font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.console .out { font-size: 16px; font-weight: 600; color: var(--ok); }
+.console .why { font-family: var(--font-body); font-size: 14px; color: var(--muted); margin-top: 10px; }
+
+/* ctor order */
+.steps { display: grid; gap: 8px; margin-top: 14px; counter-reset: s; padding: 0; list-style: none; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.steps li::before { counter-increment: s; content: counter(s); font: 600 12px/22px var(--font-mono); text-align: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--sheet); }
+
+/* quiz */
+.quiz { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 16px; }
+.qcard { min-width: 0; }
+.qcard { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.qcard .qt { font-weight: 600; margin: 0 0 10px; }
+.qcard pre.cs { margin: 0 0 10px; }
+.opts { display: grid; gap: 6px; }
+.opt {
+  text-align: left; font: inherit; font-size: 15px; padding: 8px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--sheet); color: var(--fg);
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt.right { background: var(--ok-soft); border-color: var(--ok); }
+.opt.wrong { background: var(--bad-soft); border-color: var(--bad); }
+.opt:disabled { cursor: default; }
+.explain { margin-top: 10px; font-size: 14.5px; color: var(--muted); }
+.score { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: 8px; background: var(--accent-soft); font-weight: 600; }
+.score .n { font: 700 22px var(--font-display); font-variant-numeric: tabular-nums; }
+.btn { font: 600 14px var(--font-body); padding: 8px 14px; border-radius: 6px; border: 1px solid var(--accent); background: var(--sheet); color: var(--accent); cursor: pointer; }
+
+.road { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.road span { font: 13px var(--font-mono); padding: 5px 10px; border: 1px dashed var(--line); border-radius: 4px; color: var(--muted); }
+footer { color: var(--muted); font-size: 13px; text-align: left; }
+</style>
+<style>
+.ch ul, .ch ol.plain { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 2px; }
+.ch ul li::marker { color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid; }
+.lg-notes { background: var(--sheet); border-color: var(--fg) !important; }
+.lg-add { background: var(--accent-soft); border-color: var(--accent) !important; }
+.lg-fix { background: var(--warn-soft); border-color: var(--warn) !important; }
+h4 { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin: 18px 0 4px; color: var(--fg); }
+.add { margin-top: 14px; padding: 14px 16px; border-radius: 8px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); min-width: 0; }
+.add > .tag { display: block; font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.add pre.cs { background: var(--sheet); }
+.add .mem { margin-top: 10px; }
+.add .zone { background: var(--sheet); }
+.add p:last-child { margin-bottom: 0; }
+.quote { font-style: italic; border-left: 3px solid var(--accent); padding-left: 14px; margin: 12px 0; max-width: 68ch; }
+.meta { background: var(--code-bg); border: 1.5px dashed var(--muted); }
+.meta b { color: var(--muted) !important; }
+.arrow-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font: 13px var(--font-mono); margin-top: 10px; }
+.arrow-row span.box { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--sheet); }
+.ok { color: var(--ok); font-weight: 600; } .no { color: var(--bad); font-weight: 600; }
+</style>
+
+<style>
+.tree-key { color: var(--muted); font-size: 15px; }
+.itypes { display: grid; gap: 14px; margin-top: 12px; }
+.itype { border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.itype > header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.itype h4 { margin: 0; font-size: 18px; flex: 1 1 auto; }
+.inum { font: 700 13px/26px var(--font-mono); width: 26px; height: 26px; text-align: center; border-radius: 50%; background: var(--accent); color: var(--sheet); flex: none; }
+.badge { font: 600 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+.badge.yes { background: var(--ok-soft); color: var(--ok); }
+.badge.part { background: var(--warn-soft); color: var(--warn); }
+.addtag { font: 600 10px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; font-style: normal; vertical-align: middle; }
+.imean { font-size: 17px; margin: 10px 0 0; }
+.isa { color: var(--muted); font-size: 15px; margin: 4px 0 0; text-align: center; max-width: none; }
+.tree { display: flex; flex-direction: column; align-items: center; margin: 16px 0 10px; overflow-x: auto; padding-bottom: 4px; }
+.tree .node { font: 600 13.5px var(--font-mono); padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--fg); text-align: center; white-space: nowrap; }
+.tree .node small { display: block; font-weight: 400; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.tree .node.child { background: var(--sheet); border-width: 2px; }
+.tree .node.iface { border-style: dashed; background: var(--sheet); color: var(--accent); }
+.tree .node.bad { border-color: var(--bad); background: var(--bad-soft); }
+.tree .node.inline { display: inline-block; padding: 2px 8px; font-size: 12px; }
+.vline { width: 2px; height: 18px; background: var(--accent); flex: none; }
+.kids, .parents { display: flex; justify-content: center; }
+.kid, .par { position: relative; padding: 18px 8px 0; display: flex; flex-direction: column; align-items: center; }
+.par { padding: 0 8px 18px; }
+.kid::before, .par::before { content: ""; position: absolute; left: 50%; width: 2px; height: 18px; background: var(--accent); transform: translateX(-1px); }
+.kid::before { top: 0; } .par::before { bottom: 0; }
+.kid::after, .par::after { content: ""; position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); }
+.kid::after { top: 0; } .par::after { bottom: 0; }
+.kid:first-child::after, .par:first-child::after { left: 50%; }
+.kid:last-child::after, .par:last-child::after { right: 50%; }
+.kid:only-child::after, .par:only-child::after { display: none; }
+.join { align-self: stretch; display: flex; justify-content: center; }
+.tree .join { height: 18px; width: 50%; border: 2px solid var(--accent); border-top: 0; border-radius: 0 0 8px 8px; align-self: center; max-width: 220px; }
+.side { font: 12px var(--font-body); color: var(--muted); margin-top: 6px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+@media (max-width: 700px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.mini { border: 1.5px dashed var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+.mini-l { font: 600 12px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; }
+.mini pre.cs { font-size: 12.5px; }
+.mini .tree .node { font-size: 12px; padding: 6px 8px; }
+.mini .par { padding-inline: 4px; }
+td.ok { color: var(--ok); font-weight: 600; } td.no { color: var(--bad); font-weight: 600; }
+</style>
+
+<style>
+:root { --ovr: #b3305d; --ovr-soft: #fbe8ef; --gold: #9a6a00; --gold-soft: #fdf3d6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ovr: #f08ab0; --ovr-soft: #3a1828; --gold: #f2c55c; --gold-soft: #33280c; } }
+:root[data-theme="dark"] { --ovr: #f08ab0; --ovr-soft: #3a1828; --gold: #f2c55c; --gold-soft: #33280c; }
+.sheet-fig { margin-top: 22px; border: 1.5px solid var(--line); border-radius: 12px; padding: 16px; background: var(--sheet); min-width: 0; }
+.fig-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; border-bottom: 2px solid var(--accent); padding-bottom: 8px; margin-bottom: 6px; }
+.fig-head h4 { margin: 0; font-size: 19px; letter-spacing: .01em; }
+.fig-tag { font: 600 11px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.an { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--bad); color: var(--bad); font: 600 12px var(--font-mono); flex: none; }
+/* annotated class */
+.anno { display: grid; gap: 0; border-left: 2px solid var(--line); margin-left: 4px; }
+.anno-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 14px; align-items: start; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.anno-row:last-child { border-bottom: 0; }
+.anno-l { display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 8px; row-gap: 2px; padding-left: 10px; position: relative; }
+.anno-l b { color: var(--bad); font-family: var(--font-display); font-size: 16px; }
+.anno-l > span:not(.an) { grid-column: 2; color: var(--ok); font-size: 14px; line-height: 1.4; }
+.anno-l .side-note { grid-column: 1 / -1; margin-top: 8px; font-style: normal; font-size: 13px; border: 1.5px solid var(--accent); border-radius: 6px; padding: 8px 10px; color: var(--fg); background: var(--accent-soft); }
+.anno-row pre.cs { margin: 0; }
+.anno-top, .anno-bot { margin: 10px 0 !important; }
+@media (max-width: 640px) { .anno-row { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+/* stack heap */
+.sh-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+@media (max-width: 640px) { .sh-row { grid-template-columns: minmax(0, 1fr); } }
+.sh-row > * { min-width: 0; }
+.sh-h { display: flex; gap: 10px; align-items: center; margin: 4px 0 6px !important; }
+.sh-fig { display: grid; justify-items: center; gap: 6px; }
+.sh-fig .zl, .zl { font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.stackbox { border: 2px solid var(--fg); border-top: 2px dashed var(--muted); padding: 4px; min-width: 150px; display: grid; gap: 4px; }
+.frame { border: 1.5px solid var(--fg); display: grid; text-align: center; font: 14px var(--font-mono); }
+.frame b { padding: 4px; border-bottom: 1px dashed var(--muted); }
+.frame span { padding: 4px; }
+.frame.top { background: var(--accent-soft); }
+.cap { color: var(--muted); font-size: 14px; margin: 4px 0 0; text-align: center; }
+.mem.tight { margin-top: 0; width: 100%; }
+.ipoints { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1.5px solid var(--accent); border-radius: 10px; padding: 6px 4px; }
+.ipoints ul + ul { border-left: 1px solid var(--line); }
+@media (max-width: 560px) { .ipoints { grid-template-columns: minmax(0, 1fr); } .ipoints ul + ul { border-left: 0; } }
+.trick { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 8px; }
+.cloud { border: 2px solid; border-radius: 40px 50px 44px 52px / 36px 30px 40px 34px; padding: 14px 26px; text-align: center; font-size: 16px; line-height: 1.5; }
+.cloud b { display: block; font: 700 22px var(--font-display); }
+.cloud.st { border-color: var(--ok); } .cloud.st b { color: var(--ok); }
+.cloud.hp { border-color: var(--ovr); } .cloud.hp b { color: var(--ovr); }
+.trick-arrow { font-size: 26px; color: var(--muted); }
+/* hiding vs overriding */
+.vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 14px; }
+@media (max-width: 760px) { .vs { grid-template-columns: minmax(0, 1fr); } }
+.vs > * { min-width: 0; }
+.vs-col.hide { --c: var(--accent); --cs: var(--accent-soft); }
+.vs-col.ovr, .vtc.ovr { --c: var(--ovr); --cs: var(--ovr-soft); }
+.vtc.hide { --c: var(--accent); --cs: var(--accent-soft); }
+.vs-title { color: var(--c); margin: 0 0 4px !important; }
+.vs-col pre.cs { font-size: 12.5px; }
+.vs-run { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+@media (max-width: 480px) { .vs-run { grid-template-columns: minmax(0, 1fr); } }
+.vs-out { border: 2px solid var(--c); border-radius: 8px; padding: 8px 14px; margin-top: 10px; width: fit-content; }
+.vs-out span { display: block; font: 600 11px var(--font-mono); text-transform: uppercase; color: var(--c); }
+.vs-out b { font: 600 16px var(--font-mono); color: var(--c); white-space: nowrap; }
+.band { margin: 18px auto 0; width: fit-content; max-width: 100%; border: 1.5px solid var(--accent); border-radius: 6px; padding: 4px 12px; font: 600 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); text-align: center; }
+.band.small { margin: 0 0 10px; border-color: var(--c, var(--accent)); color: var(--c, var(--accent)); }
+.vs-col .mem { grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); margin-top: 0; }
+.vs-col .zone { border-color: var(--c); }
+.vs-col .ref { border-color: var(--c); }
+.vs-col .ref em { color: var(--c); }
+.part { border: 1.5px solid var(--ok); border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font: 12px/1.45 var(--font-mono); display: grid; }
+.part b { color: var(--ok); font-family: var(--font-body); font-size: 13px; }
+.part code { background: none; border: 0; padding: 0; color: var(--c); }
+.part small { color: var(--muted); font-size: 11px; }
+.resolve { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (max-width: 480px) { .resolve { grid-template-columns: minmax(0, 1fr); } }
+.rbox { border: 1.5px solid var(--c); border-radius: 8px; padding: 10px; min-width: 0; overflow-wrap: anywhere; }
+.rh { font: 600 13px var(--font-body); color: var(--c); text-align: center; margin-bottom: 6px; }
+.flow { display: grid; justify-items: center; text-align: center; gap: 2px; font-size: 13px; line-height: 1.4; }
+.flow i { font-style: normal; color: var(--c); }
+.flow code { font-size: 12px; }
+.flow .hit { border: 1.5px solid var(--c); background: var(--cs); border-radius: 6px; padding: 4px 8px; font-weight: 600; }
+.yn { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin-top: 6px; width: 100%; }
+.yn > div { display: grid; gap: 4px; justify-items: center; font-size: 12px; }
+.yn em { font: 600 11px var(--font-mono); font-style: normal; padding: 1px 8px; border-radius: 4px; }
+.yn em.y { color: var(--ok); border: 1px solid var(--ok); } .yn em.n { color: var(--bad); border: 1px solid var(--bad); }
+.keypt { margin-top: 10px; border: 1.5px solid var(--kw); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--kw); text-align: center; }
+.keypt b:first-child { display: block; font: 600 11px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; }
+.summ { margin-top: 10px; border: 1.5px solid var(--c); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--c); }
+.vs.bottom { border-top: 1.5px solid var(--line); padding-top: 14px; margin-top: 18px; }
+.golden { margin-top: 10px; background: var(--gold-soft); border: 1.5px solid var(--gold); border-radius: 8px; padding: 10px 14px; font-size: 14px; }
+.golden b { display: block; color: var(--gold); text-decoration: underline; }
+.vt { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vtc { display: grid; justify-items: center; gap: 4px; border: 1.5px solid var(--c); border-radius: 8px; padding: 10px; font: 13px var(--font-mono); text-align: center; }
+.vtc .zl { color: var(--c); }
+.vtt { font-weight: 600; color: var(--c); }
+.vtc i { font-style: normal; color: var(--c); }
+.vtm { border: 1.5px solid var(--c); background: var(--cs); border-radius: 6px; padding: 4px 8px; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <nav class="rail" aria-label="Chapters">
+    <div class="label">Chapters</div>
+    <ol id="toc">
+      <li><a href="#class"><span>01</span>Class &amp; Object</a></li>
+      <li><a href="#static"><span>02</span>Static</a></li>
+      <li><a href="#inherit"><span>03</span>Inheritance</a></li>
+      <li><a href="#base"><span>04</span>Base</a></li>
+      <li><a href="#this"><span>05</span>This</a></li>
+      <li><a href="#encap"><span>06</span>Encapsulation</a></li>
+      <li><a href="#abstract"><span>07</span>Abstraction</a></li>
+      <li><a href="#poly"><span>08</span>Polymorphism</a></li>
+      <li><a href="#upcast"><span>09</span>Up-casting</a></li>
+      <li><a href="#downcast"><span>10</span>Down-casting</a></li>
+      <li><a href="#isas"><span>11</span>IS, AS</a></li>
+      <li><a href="#access"><span>12</span>Access Modifiers</a></li>
+      <li><a href="#props"><span>13</span>Properties</a></li>
+      <li><a href="#quiz"><span>14</span>Quiz</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">C# · OOPs · your notes, complete</div>
+      <h1>OOPs</h1>
+      <p>Every line of the OOPs tab in your "Learning" doc is here, in the same order and in your words. Where your doc had a screenshot, there is now a code example or memory picture in the same Employee, Manager and Developer story. Corrections sit right under the line they correct.</p>
+      <div class="cast">
+        <div class="who"><b>Employee</b> base class</div>
+        <div class="who"><b>Manager</b> : Employee</div>
+        <div class="who"><b>Developer</b> : Employee</div>
+      </div>
+      <div class="legend">
+        <span><i class="lg-notes"></i>Plain text: your notes</span>
+        <span><i class="lg-add"></i>Blue box: example or picture added</span>
+        <span><i class="lg-fix"></i>Amber box: correction</span>
+      </div>
+    </header>
+
+    <!-- 01 CLASS & OBJECT -->
+    <section class="ch" id="class">
+      <div class="ch-head"><span class="ch-no">01</span><h2>Class and Object</h2></div>
+
+      <h3>Class</h3>
+      <p>A Class is a user-defined data type that acts as a blueprint for creating objects. It encapsulates data and behavior together.</p>
+      <p>A class can contain fields, properties, methods, constructors, events, and other members.</p>
+      <p>Memory for instance data is allocated only when an object is created.</p>
+
+      <h4>Class Memory</h4>
+      <p>When you create the class only MetaData loads.</p>
+      <p>After creating the object then only Memory in Heap will be allocated.</p>
+
+      <h4>Class contains</h4>
+      <ul>
+        <li>Fields</li>
+        <li>Properties</li>
+        <li>Constants</li>
+        <li>Methods</li>
+        <li>Constructors</li>
+        <li>Destructors (Finalizers)</li>
+        <li>Static Members</li>
+        <li>Nested Classes</li>
+        <li>Events</li>
+        <li>Indexers</li>
+      </ul>
+
+      <div class="sheet-fig" id="employee-members">
+        <div class="fig-head"><h4>Employee class: all basic members</h4><span class="fig-tag">From your notes</span></div>
+<pre class="cs anno-top">using System;
+public class Employee
+{</pre>
+        <div class="anno">
+          <div class="anno-row"><div class="anno-l"><span class="an">1</span><b>Constant</b><span>Fixed value which cannot be changed</span></div>
+<pre class="cs">    public const string CompanyName = "ABC Technologies";</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">2</span><b>Static Member</b><span>Belongs to the class, not to any object</span></div>
+<pre class="cs">    public static int EmployeeCount = 0;</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">3</span><b>Fields</b><span>Variables to store data</span></div>
+<pre class="cs">    public int Id;
+    public string Name;
+    public decimal Salary;</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">4</span><b>Properties</b><span>Provide controlled access to fields</span></div>
+<pre class="cs">    public string Department { get; set; }
+    public string Email { get; set; }</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">5</span><b>Constructors</b><span>Used to initialize objects</span></div>
+<pre class="cs">    // Default Constructor
+    public Employee()
+    {
+        EmployeeCount++;
+        Console.WriteLine("Default Constructor Called");
+    }
+
+    // Parameterized Constructor
+    public Employee(int id, string name, decimal salary)
+    {
+        Id = id;
+        Name = name;
+        Salary = salary;
+        EmployeeCount++;
+        Console.WriteLine("Parameterized Constructor Called");
+    }</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">6</span><b>Methods</b><span>Define behavior or actions</span><em class="side-note">Methods contain the logic or operations that can be performed.</em></div>
+<pre class="cs">    public void DisplayEmployee()
+    {
+        Console.WriteLine("Id : " + Id);
+        Console.WriteLine("Name : " + Name);
+        Console.WriteLine("Salary : " + Salary);
+        Console.WriteLine("Department : " + Department);
+        Console.WriteLine("Email : " + Email);
+    }
+
+    public void Work()
+    {
+        Console.WriteLine(Name + " is working.");
+    }</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">7</span><b>Event</b><span>Used for communication (Notification)</span></div>
+<pre class="cs">    public event EventHandler SalaryCredited;   // event declaration
+
+    public void CreditSalary()
+    {
+        Console.WriteLine("Salary Credited Successfully.");
+        // raise the event
+        SalaryCredited?.Invoke(this, EventArgs.Empty);
+    }</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">8</span><b>Indexer</b><span>Access the object using index (like array)</span><em class="side-note">Employee object can be accessed like an array.<br><code>emp[0] = "C#";</code><br><code>string s = emp[0];</code></em></div>
+<pre class="cs">    private string[] skills = new string[5];
+    public string this[int index]
+    {
+        get { return skills[index]; }
+        set { skills[index] = value; }
+    }</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">9</span><b>Nested Class</b><span>Class inside another class</span></div>
+<pre class="cs">    public class Address
+    {
+        public string City { get; set; }
+        public string State { get; set; }
+    }</pre></div>
+          <div class="anno-row"><div class="anno-l"><span class="an">10</span><b>Destructor (Finalizer)</b><span>Called by Garbage Collector before destroying object</span></div>
+<pre class="cs">    ~Employee()
+    {
+        Console.WriteLine("Employee object is being destroyed.");
+    }</pre></div>
+        </div>
+<pre class="cs anno-bot">}</pre>
+        <div class="note fix" style="margin-top:12px"><span class="tag">Note</span><p>This class includes all basic OOP members which are important for interviews.</p></div>
+      </div>
+
+      <h3>Object</h3>
+      <p>An object is an instance of a class, it represents a real-world entity and contains its own data (members or field) and behaviour (methods).</p>
+      <p>When you initialize the object using a <b>new</b> keyword, memory will be allocated in Heap.</p>
+
+      <div class="add"><span class="tag">Picture · how an object is stored in memory</span>
+<pre class="cs">Employee emp1 = new Employee(1) { Name = "Asha" };
+Employee emp2 = new Employee(2) { Name = "Ravi" };</pre>
+        <div class="mem">
+          <div class="zone"><div class="zl">Stack · reference variables</div>
+            <div class="ref">emp1 <em>→ 0x1A40</em></div>
+            <div class="ref">emp2 <em>→ 0x1B80</em></div>
+            <div class="obj meta"><b>Type metadata (loaded once)</b>class Employee: member list, method code, static Company = "Infosys"</div>
+          </div>
+          <div class="zone"><div class="zl">Heap · objects (one per new)</div>
+            <div class="obj"><b>0x1A40 · Employee</b>_id = 1<br>Name = "Asha"<br>_skills → string[5]<br><span class="dim">+ pointer to Employee type info</span></div>
+            <div class="obj"><b>0x1B80 · Employee</b>_id = 2<br>Name = "Ravi"<br>_skills → string[5]<br><span class="dim">+ pointer to Employee type info</span></div>
+          </div>
+        </div>
+        <ol class="steps">
+          <li><span>The first time Employee is used, the CLR loads its <b>metadata</b> once. No object memory exists yet.</span></li>
+          <li><span><code>new Employee(1)</code> allocates a block on the <b>heap</b> big enough for the instance fields and runs the constructor.</span></li>
+          <li><span>The variable <code>emp1</code> (on the stack, if it is a local) stores only the <b>address</b> of that block.</span></li>
+          <li><span>Methods are <b>not</b> copied into each object. Both objects share one copy of <code>Work()</code>; only the data is per object.</span></li>
+          <li><span>When nothing references an object any more, the Garbage Collector frees it.</span></li>
+        </ol>
+      </div>
+      <div class="note fix"><span class="tag">Correction</span><p>Value types are not "always on the stack". They live wherever their container lives. A local <code>int</code> sits on the stack, but the <code>int _id</code> field above lives inside the object on the heap.</p></div>
+
+      <div class="sheet-fig" id="stack-heap">
+        <div class="fig-head"><h4>Stack vs Heap memory (.NET)</h4><span class="fig-tag">From your notes</span></div>
+
+        <div class="sh-row">
+          <div>
+            <h4 class="sh-h"><span class="an">1</span>Stack Memory</h4>
+            <ul>
+              <li>Fast memory</li>
+              <li>Stores local variables</li>
+              <li>Stores method calls (Stack Frames)</li>
+              <li>Value types (int, bool, char, struct – when local)</li>
+              <li>Automatic cleanup when method ends</li>
+              <li><b>LIFO</b> (Last In First Out)</li>
+            </ul>
+          </div>
+          <div class="sh-fig">
+            <div class="zl">Stack</div>
+            <div class="stackbox">
+              <div class="frame top"><b>Add()</b><span>b = 20</span></div>
+              <div class="frame"><b>Main()</b><span>a = 10</span></div>
+            </div>
+            <p class="cap">When Add() completes, its frame is removed. Execution flows Main() → Add() → back to Main().</p>
+          </div>
+        </div>
+
+        <div class="sh-row">
+          <div>
+            <h4 class="sh-h"><span class="an">2</span>Heap Memory</h4>
+            <ul>
+              <li>Stores objects created using <code>new</code></li>
+              <li>Stores class instances</li>
+              <li>Arrays</li>
+              <li>Strings (Reference Type)</li>
+              <li>Managed by Garbage Collector (GC)</li>
+              <li>Larger but slower than Stack</li>
+            </ul>
+          </div>
+          <div class="sh-fig">
+            <div class="mem tight">
+              <div class="zone"><div class="zl">Stack</div><div class="ref">p <em>→</em></div></div>
+              <div class="zone"><div class="zl">Heap</div><div class="obj"><b>Person</b>Name = John<br>Age = 25</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sh-row">
+          <div>
+            <h4 class="sh-h"><span class="an">3</span>Example (Value Type)</h4>
+<pre class="cs">int x = 10;
+int y = x;</pre>
+            <p class="cap">Result: two independent copies.</p>
+          </div>
+          <div class="sh-fig">
+            <div class="zl">Stack</div>
+            <div class="stackbox"><div class="frame"><span>x = 10</span></div><div class="frame"><span>y = 10</span></div></div>
+            <p class="cap">Changing y will not affect x.</p>
+          </div>
+        </div>
+
+        <div class="sh-row">
+          <div>
+            <h4 class="sh-h"><span class="an">4</span>Reference Example</h4>
+<pre class="cs">Person p1 = new Person();
+Person p2 = p1;</pre>
+          </div>
+          <div class="sh-fig">
+            <div class="mem tight">
+              <div class="zone"><div class="zl">Stack</div><div class="ref">p1 <em>→ Person</em></div><div class="ref">p2 <em>→ Person</em></div></div>
+              <div class="zone"><div class="zl">Heap</div><div class="obj"><b>Person</b>Name = John<br>Age = 25</div></div>
+            </div>
+            <p class="cap">Both point to the <b>same</b> object.</p>
+          </div>
+        </div>
+
+        <h4 class="sh-h"><span class="an">5</span>Interview Points</h4>
+        <div class="ipoints">
+          <ul><li>Stack = Fast</li><li>Heap = Objects</li><li>Class → Heap</li><li>Struct → Value Type</li></ul>
+          <ul><li>String = Reference Type + Immutable</li><li>GC cleans Heap</li><li>Stack cleans automatically</li><li>Stack is smaller, Heap is larger</li></ul>
+        </div>
+
+        <h4 class="sh-h" style="justify-content:center">Memory Trick 🙂</h4>
+        <div class="trick">
+          <div class="cloud st"><b>STACK</b>= Short Life<br>+ Fast</div>
+          <span class="trick-arrow">↔</span>
+          <div class="cloud hp"><b>HEAP</b>= Long Life<br>+ Objects</div>
+        </div>
+        <div class="note fix" style="margin-top:14px"><span class="tag">Remember</span><p>"Value types on the stack" is true only for <b>locals</b>, as your notes say. A value-type field inside a class (like <code>int Id</code> in Employee) lives on the heap with its object.</p></div>
+      </div>
+
+      <h3>Difference Between Class and Object</h3>
+      <p>A class is a blueprint or template that defines the structure and behavior of objects. It specifies what data and methods objects will have but doesn't store instance-specific data. An object is an instance of a class created using the new keyword. Each object has its own memory and maintains its own state while sharing the same class definition.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Class</th><th>Object</th></tr></thead>
+        <tbody>
+          <tr><td>Blueprint / template</td><td>Instance built from the blueprint</td></tr>
+          <tr><td>Declared once</td><td>Created many times with <code>new</code></td></tr>
+          <tr><td>Only metadata is loaded</td><td>Memory allocated on the heap</td></tr>
+          <tr><td>Stores no instance data</td><td>Has its own state (field values)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Is <code>string</code> a value type?</summary><div class="a"><p>No, it is a reference type. It is <b>immutable</b>, so every "change" creates a new string, which makes it behave like a value type when you assign and modify it.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 02 STATIC -->
+    <section class="ch" id="static">
+      <div class="ch-head"><span class="ch-no">02</span><h2>Static</h2></div>
+      <p>A static member belongs to the class itself, not to an object (instance).</p>
+      <p>Advantage is reusability. No data duplication.</p>
+      <p>Static members are stored in the <b>static area (or Loader Heap)</b>.</p>
+
+      <h3>Static field</h3>
+      <p>A static member is a member belonging to a class rather than an instance of the class.</p>
+      <ul>
+        <li>It is shared among the objects. So only one copy of this exists in memory.</li>
+        <li>A static member can access using the className without creating the object.</li>
+      </ul>
+      <h4>Example</h4>
+      <p><b>Before:</b></p>
+      <div class="add"><span class="tag">Example · before</span>
+<pre class="cs">public class Employee
+{
+    public string Name;
+    public string Company = "Infosys";     // instance field
+}</pre>
+      </div>
+      <p>That means <b>"Infosys"</b> is duplicated in every object. Waste of memory.</p>
+      <p><b>Better Solution:</b> Store it <b>once</b>.</p>
+      <div class="add"><span class="tag">Example · better solution</span>
+<pre class="cs">public class Employee
+{
+    public string Name;
+    public static string Company = "Infosys";   // one copy for the class
+}
+
+Console.WriteLine(Employee.Company);           // accessed with the class name</pre>
+        <div class="mem">
+          <div class="zone"><div class="zl">Static area · one copy</div>
+            <div class="obj"><b>Employee (static)</b>Company = "Infosys"</div>
+          </div>
+          <div class="zone"><div class="zl">Heap · per object</div>
+            <div class="obj"><b>Employee #1</b>Name = "Asha" <span class="dim">· no Company copy</span></div>
+            <div class="obj"><b>Employee #2</b>Name = "Ravi" <span class="dim">· no Company copy</span></div>
+          </div>
+        </div>
+      </div>
+      <p>There is only <b>one</b> copy of: Company. No matter how many Employee objects you create.</p>
+
+      <h3>Static Method</h3>
+      <p>A static method belongs to the class rather than an instance. It can be called without creating an object and can directly access only static members of the class.</p>
+      <p><b>Note:</b></p>
+      <ul>
+        <li>The static method can only access the static members. It can not access the non static member.</li>
+        <li>Only objects are able to access the non static method.</li>
+      </ul>
+      <div class="note fix"><span class="tag">Correction</span><p>Precisely: a static method can't use instance members <i>directly</i> (it has no <code>this</code>). It can still use them through an object it receives or creates: <code>static void Print(Employee e) =&gt; Console.WriteLine(e.Name);</code></p></div>
+      <h4>Real-world Examples</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Math.Max(10, 20);                    // utility, no state needed
+Console.WriteLine("Hello");
+string.IsNullOrEmpty(name);
+int.Parse("42");
+
+public class SalaryHelper
+{
+    public static decimal CalculateTax(decimal salary) =&gt; salary * 0.10m;
+}
+SalaryHelper.CalculateTax(50000);    // no SalaryHelper object needed</pre>
+      </div>
+
+      <h3>Static constructor</h3>
+      <p>A static constructor can not have access modifiers. It is always <b>Private</b> implicitly. Compilers enforce this.</p>
+      <h4>Usage of static constructor</h4>
+      <p>To initialize the static field.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    public static string Company;
+
+    static Employee()                 // no access modifier, no parameters
+    {
+        Company = "Infosys";
+        Console.WriteLine("Static ctor ran");
+    }
+
+    public Employee() { Console.WriteLine("Instance ctor ran"); }
+}
+
+new Employee();   // Static ctor ran, Instance ctor ran
+new Employee();   // Instance ctor ran   (static ctor does NOT run again)</pre>
+      </div>
+      <h4>Who calls the Static Constructor?</h4>
+      <p>✅ <b>CLR (Common Language Runtime)</b>.</p>
+      <p>The CLR automatically executes the static constructor. Exactly <b>once</b>.</p>
+      <p>Before:</p>
+      <ul>
+        <li>First object creation</li>
+        <li>OR first static member access</li>
+      </ul>
+      <p>Whichever happens first.</p>
+      <div class="note key"><span class="tag">Also remember</span><p>A static constructor takes <b>no parameters</b>, can't be overloaded, and can't be called by your code.</p></div>
+
+      <h3>Static Class</h3>
+      <p>A static class is a class that cannot be instantiated and can contain only static members. It is commonly used for utility or helper functionality, such as the built-in Math class.</p>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>Why is <code>Main()</code> static?</summary><div class="a"><p>So the CLR can call the entry point without first creating an object of the class.</p></div></details>
+        <details><summary>Can we overload static methods?</summary><div class="a"><p>Yes. Overloading only needs a different parameter list. Static methods cannot be <i>overridden</i>, though.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 03 INHERITANCE -->
+    <section class="ch" id="inherit">
+      <div class="ch-head"><span class="ch-no">03</span><h2>Inheritance</h2></div>
+      <p>Inheritance is a feature of an OOP that allows one class to acquire members of another class.</p>
+      <p>It promotes code reusability, maintainability and extensibility.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee  { public string Name; public void Work() { } }
+public class Manager   : Employee { public void ApproveLeave() { } }
+public class Developer : Employee { public void WriteCode() { } }
+
+Manager m = new Manager();
+m.Name = "Asha";      // inherited from Employee
+m.Work();             // inherited from Employee
+m.ApproveLeave();     // its own</pre>
+      </div>
+      <p><b>Note:</b> The child class can not inherit the Private members static members and constructor.</p>
+      <div class="note fix"><span class="tag">Correction</span><p>Only constructors are truly not inherited. <b>Private members are inherited</b> (they exist inside the Manager object) but are not <i>accessible</i> from Manager's code. Public static members are reachable through the child too: <code>Manager.Company</code> works.</p></div>
+
+      <h3>Types of inheritance</h3>
+      <p class="tree-key">How to read the diagrams: the <b>parent</b> is on top and the <b>child</b> is below. A line means "inherits from". Dashed boxes are <b>interfaces</b>.</p>
+      <div class="itypes">
+
+        <article class="itype">
+          <header><span class="inum">1</span><h4>Single inheritance</h4><span class="badge yes">✓ C# classes</span></header>
+          <p class="imean">One child inherits from <b>one</b> parent.</p>
+          <div class="tree">
+            <div class="node">Employee</div>
+            <div class="vline"></div>
+            <div class="node child">Manager</div>
+          </div>
+          <p class="isa">Manager <b>is an</b> Employee.</p>
+<pre class="cs">class Employee { public string Name; }
+class Manager : Employee { }       // Manager gets Name</pre>
+        </article>
+
+        <article class="itype">
+          <header><span class="inum">2</span><h4>Multilevel inheritance</h4><span class="badge yes">✓ C# classes</span></header>
+          <p class="imean">A <b>chain</b>: a child becomes the parent of another class, like grandparent → parent → child.</p>
+          <div class="tree">
+            <div class="node">Employee</div>
+            <div class="vline"></div>
+            <div class="node">Manager</div>
+            <div class="vline"></div>
+            <div class="node child">SeniorManager</div>
+          </div>
+          <p class="isa">SeniorManager gets members of <b>both</b> Manager and Employee.</p>
+<pre class="cs">class Employee      { public string Name; }
+class Manager       : Employee { public void ApproveLeave() { } }
+class SeniorManager : Manager  { public void ApproveBudget() { } }
+// SeniorManager has Name + ApproveLeave() + ApproveBudget()</pre>
+        </article>
+
+        <article class="itype">
+          <header><span class="inum">3</span><h4>Hierarchical inheritance</h4><span class="badge yes">✓ C# classes</span></header>
+          <p class="imean">One parent and multiple children.</p>
+          <div class="tree">
+            <div class="node">Employee</div>
+            <div class="vline"></div>
+            <div class="kids">
+              <div class="kid"><div class="node child">Manager</div></div>
+              <div class="kid"><div class="node child">Developer</div></div>
+              <div class="kid"><div class="node child">Tester</div></div>
+            </div>
+          </div>
+          <p class="isa">All three share Employee's members, and each adds its own.</p>
+<pre class="cs">class Manager   : Employee { }
+class Developer : Employee { }
+class Tester    : Employee { }</pre>
+        </article>
+
+        <article class="itype">
+          <header><span class="inum">4</span><h4>Multiple inheritance</h4><span class="badge part">Interfaces only</span></header>
+          <p class="imean">One child has <b>more than one</b> parent.</p>
+          <p>Multi Inheritance is not supported for class and abstract but interface class.</p>
+          <div class="note fix"><span class="tag">Correction</span><p>An interface isn't a class. Say: "A class can inherit from only one class (abstract or not), but it can implement multiple interfaces."</p></div>
+          <div class="pair">
+            <div class="mini">
+              <div class="mini-l no">✗ Two classes</div>
+              <div class="tree">
+                <div class="parents"><div class="par"><div class="node">Employee</div></div><div class="par"><div class="node">Person</div></div></div>
+                <div class="vline"></div>
+                <div class="node child bad">Manager</div>
+              </div>
+<pre class="cs">class Manager : Employee, Person { }   // ✗ compile error</pre>
+            </div>
+            <div class="mini">
+              <div class="mini-l ok">✓ One class + interfaces</div>
+              <div class="tree">
+                <div class="parents"><div class="par"><div class="node">Employee</div></div><div class="par"><div class="node iface">IReviewable</div></div><div class="par"><div class="node iface">IPayable</div></div></div>
+                <div class="vline"></div>
+                <div class="node child">Manager</div>
+              </div>
+<pre class="cs">class Manager : Employee, IReviewable, IPayable { }   // ✓</pre>
+            </div>
+          </div>
+          <h4>Why? The Diamond Problem</h4>
+          <div class="tree">
+            <div class="node">A</div>
+            <div class="vline"></div>
+            <div class="kids">
+              <div class="kid"><div class="node">B<small>Display() → "B"</small></div></div>
+              <div class="kid"><div class="node">C<small>Display() → "C"</small></div></div>
+            </div>
+            <div class="join"></div>
+            <div class="vline"></div>
+            <div class="node child bad">D<small>Display() → "B" or "C"?</small></div>
+          </div>
+          <p><b>Why?</b> If both B and C have a method named Display(), which one should D inherit? This ambiguity is called the <b>Diamond Problem</b>.</p>
+          <div class="add"><span class="tag">Example · how interfaces avoid it</span>
+<pre class="cs">class B { public void Display() =&gt; Console.WriteLine("B"); }
+class C { public void Display() =&gt; Console.WriteLine("C"); }
+// class D : B, C { }          // ✗ not allowed in C#
+
+interface IB { void Display(); }
+interface IC { void Display(); }
+class D : IB, IC               // ✓ interfaces are fine
+{
+    public void Display() =&gt; Console.WriteLine("D decides");
+}</pre>
+            <p>Interfaces only <b>declare</b> Display(); they don't bring two competing bodies. D writes the one implementation, so there is nothing to choose between.</p>
+          </div>
+        </article>
+
+        <article class="itype">
+          <header><span class="inum">5</span><h4>Hybrid inheritance <em class="addtag">added</em></h4><span class="badge part">Interfaces only</span></header>
+          <p class="imean">A <b>mix</b> of two or more of the types above. Because it usually involves multiple inheritance, C# allows it only with interfaces.</p>
+          <div class="tree">
+            <div class="node">Employee</div>
+            <div class="vline"></div>
+            <div class="kids">
+              <div class="kid"><div class="node">Manager</div></div>
+              <div class="kid"><div class="node">Developer</div><div class="vline"></div><div class="node child">TeamLead</div><div class="side">also implements <span class="node iface inline">ILeader</span></div></div>
+            </div>
+          </div>
+          <p class="isa">Hierarchical (Employee → Manager, Developer) + multilevel (Employee → Developer → TeamLead) + an interface.</p>
+<pre class="cs">class Manager   : Employee { }
+class Developer : Employee { }
+class TeamLead  : Developer, ILeader { }</pre>
+        </article>
+      </div>
+
+      <h4>Quick summary</h4>
+      <div class="tbl"><table>
+        <thead><tr><th>Type</th><th>Shape</th><th>With classes</th><th>With interfaces</th></tr></thead>
+        <tbody>
+          <tr><td>Single</td><td>A → B</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+          <tr><td>Multilevel</td><td>A → B → C</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+          <tr><td>Hierarchical</td><td>A → B, C, D</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+          <tr><td>Multiple</td><td>A, B → C</td><td class="no">✗</td><td class="ok">✓</td></tr>
+          <tr><td>Hybrid</td><td>mix of the above</td><td class="no">✗ if it needs two parent classes</td><td class="ok">✓</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Accessing Members in Inheritance</h3>
+      <div class="add"><span class="tag">Example</span>
+      <div class="tbl" style="margin-top:6px"><table>
+        <thead><tr><th>Code</th><th>What you can call</th></tr></thead>
+        <tbody>
+          <tr><td><code>Employee e = new Employee();</code></td><td>Employee members only</td></tr>
+          <tr><td><code>Manager m = new Manager();</code></td><td>Employee members + Manager members</td></tr>
+          <tr><td><code>Employee e = new Manager();</code></td><td>Employee members only (the reference decides), until you downcast</td></tr>
+          <tr><td><code>Manager m = new Employee();</code></td><td><span class="no">Compile error</span>: an Employee is not necessarily a Manager</td></tr>
+        </tbody>
+      </table></div></div>
+
+      <h3>Interview Tip</h3>
+      <h4>1. Are Constructors Inherited?</h4>
+      <p><b>Constructors are NOT inherited.</b> But… <b>the base constructor is automatically executed when creating a derived object.</b></p>
+      <p>While compiling the code CLI adds base() if you don't mention one.</p>
+      <div class="note fix"><span class="tag">Correction</span><p>It's the <b>C# compiler</b> that inserts the call to the parameterless <code>base()</code>, not the CLI/CLR.</p></div>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">class Employee { public Employee()  { Console.WriteLine("Employee ctor"); } }
+class Manager : Employee { public Manager() { Console.WriteLine("Manager ctor"); } }
+// compiler turns it into:  public Manager() : base() { ... }
+
+new Manager();   // Employee ctor, then Manager ctor</pre>
+      </div>
+      <h4>2. Suppose the base class has only a parameterized constructor?</h4>
+      <div class="add"><span class="tag">Example · wrong</span>
+<pre class="cs">class Employee { public Employee(int id) { } }
+class Manager : Employee
+{
+    public Manager() { }      // ✗ CS7036: there is no parameterless Employee() to call
+}</pre>
+      </div>
+      <p><b>Correct Way.</b> When base class has parameterized constructor. We need to send the parameter.</p>
+      <div class="add"><span class="tag">Example · correct</span>
+<pre class="cs">class Manager : Employee
+{
+    public Manager() : base(101) { }     // ✓ pass the parameter up
+}</pre>
+      </div>
+    </section>
+
+    <!-- 04 BASE -->
+    <section class="ch" id="base">
+      <div class="ch-head"><span class="ch-no">04</span><h2>Base</h2></div>
+      <p>Base is a keyword that helps to access the members (constructors, methods, properties, fields) of the immediate parent class.</p>
+
+      <h3>Calling parent constructor</h3>
+      <p>base() is used to call the constructor of the base class.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    public int Id;
+    public Employee(int id) { Id = id; Console.WriteLine("Employee ctor"); }
+}
+
+public class Developer : Employee
+{
+    public Developer() : base(101)
+    {
+        Console.WriteLine("Developer ctor");
+    }
+}</pre>
+      </div>
+      <p>Before executing the Developer constructor, call the Employee(int id) constructor with the value 101.</p>
+      <p>A child constructor can call <b>only its immediate parent's constructor</b>.</p>
+
+      <h3>Calling parent method</h3>
+      <p>If the parent and child class have the same method. But I need to call the parent class method. In this time we need to use the base keyword call the parent method.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee  { public virtual void Work() =&gt; Console.WriteLine("Employee working"); }
+public class Developer : Employee
+{
+    public override void Work()
+    {
+        base.Work();                               // Employee working
+        Console.WriteLine("Developer writing code");
+    }
+}</pre>
+      </div>
+
+      <h3>Calling parent properties</h3>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee  { public string Title { get; set; } = "Employee"; }
+public class Developer : Employee
+{
+    public new string Title { get; set; } = "Developer";
+    public void Show() =&gt; Console.WriteLine($"{Title} / {base.Title}");  // Developer / Employee
+}</pre>
+      </div>
+
+      <h3>Accessing the parent field</h3>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee  { protected decimal Bonus = 5000; }
+public class Developer : Employee
+{
+    private new decimal Bonus = 8000;
+    public void Show() =&gt; Console.WriteLine($"{Bonus} / {base.Bonus}");  // 8000 / 5000
+}</pre>
+      </div>
+
+      <h3>Interview Tip</h3>
+      <h4>1. Can we use base in a static method?</h4>
+      <p>No. Because base refers to the <b>current object's</b> base class. Static methods don't belong to an object; they belong to the class. Therefore, base is not available in a static context.</p>
+      <h4>2. What is the difference between this and base?</h4>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th><code>this</code></th><th><code>base</code></th></tr></thead>
+        <tbody>
+          <tr><td>Refers to</td><td>Current object (current class members)</td><td>Parent part of the current object</td></tr>
+          <tr><td>Constructor call</td><td><code>this(...)</code> calls another constructor of the same class</td><td><code>base(...)</code> calls the immediate parent's constructor</td></tr>
+          <tr><td>Typical use</td><td>Field vs parameter with same name, constructor chaining</td><td>Call the parent's version of an overridden/hidden member</td></tr>
+          <tr><td>In static method</td><td>Not allowed</td><td>Not allowed</td></tr>
+        </tbody>
+      </table></div>
+      <h4>3. Does base create a new parent object?</h4>
+      <p>base simply refers to that existing base-class portion of the current object. It does <b>not</b> create another Employee object.</p>
+      <div class="add"><span class="tag">Picture</span>
+        <div class="mem">
+          <div class="zone"><div class="zl">Stack</div><div class="ref">dev <em>→ obj #3</em></div></div>
+          <div class="zone"><div class="zl">Heap · one object</div>
+            <div class="obj"><b>Developer #3</b><span class="dim">Employee part ← base points here</span><br>Id, Bonus = 5000, Title<br><span class="dim">Developer part ← this</span><br>Bonus = 8000, Title</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Access modifiers: Protected</h3>
+      <p>Protected access modifier allows members to be accessed in the same class or child (derived) class.</p>
+      <p style="color:var(--muted)">More detail in chapter 12.</p>
+    </section>
+
+    <!-- 05 THIS -->
+    <section class="ch" id="this">
+      <div class="ch-head"><span class="ch-no">05</span><h2>This</h2></div>
+      <p>This is the keyword used to call the current object members.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    private string name;
+    public Employee(string name)
+    {
+        this.name = name;     // this.name = field, name = parameter
+    }
+}</pre>
+      </div>
+      <h3>This()</h3>
+      <p>This() is used to call the current class's other constructor.</p>
+      <p>For code reusability and maintainability.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    public int Id; public string Name; public string Dept;
+
+    public Employee(int id, string name, string dept)
+    { Id = id; Name = name; Dept = dept; }
+
+    public Employee(int id, string name) : this(id, name, "General") { }
+    public Employee(int id)              : this(id, "Unknown") { }
+}
+
+new Employee(7);   // → (7, "Unknown") → (7, "Unknown", "General")</pre>
+      </div>
+      <h3>Rule</h3>
+      <p>A constructor can have <b>only one</b> constructor initializer either this(...) <b>or</b> base(...), <b>not both</b>.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public Manager() : this(1) { }                 // ✓
+public Manager(int id) : base(id) { }          // ✓ the chain reaches base through another ctor
+// public Manager() : this(1), base(1) { }     // ✗ compile error</pre>
+      </div>
+    </section>
+
+    <!-- 06 ENCAPSULATION -->
+    <section class="ch" id="encap">
+      <div class="ch-head"><span class="ch-no">06</span><h2>Encapsulation</h2></div>
+      <p>It is the process of binding the data and methods together to protect the data. While restricting the direct access to data. In C# We can implement this using the Private fields and public properties or methods.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    private decimal _salary;                       // hidden data
+
+    public decimal Salary                          // controlled access
+    {
+        get =&gt; _salary;
+        set
+        {
+            if (value &lt; 0) throw new ArgumentException("Salary cannot be negative");
+            _salary = value;
+        }
+    }
+}
+
+var e = new Employee();
+e.Salary = 50000;      // ✓
+e.Salary = -10;        // ✗ throws, the class protects its data
+// e._salary = -10;    // ✗ compile error, private</pre>
+      </div>
+      <h3>Interview Tip</h3>
+      <p>A common follow-up question is:</p>
+      <p><b>If auto-implemented properties are public (<code>public int Age { get; set; }</code>), is that encapsulation?</b></p>
+      <p>The answer is:</p>
+      <ul>
+        <li><b>Technically yes</b>, because access still goes through a property rather than a field.</li>
+        <li>However, <b>it doesn't provide much protection</b> because there's no validation or restricted access.</li>
+        <li>Stronger encapsulation uses private fields with validation logic in the property setter when business rules need to be enforced.</li>
+      </ul>
+    </section>
+
+    <!-- 07 ABSTRACTION -->
+    <section class="ch" id="abstract">
+      <div class="ch-head"><span class="ch-no">07</span><h2>Abstraction</h2></div>
+      <p>Abstraction is the process of hiding the implementation and showing the only essential functionality to the user. Abstraction is mainly achieved using the <b>abstract</b> and <b>interface</b> class.</p>
+      <div class="note fix"><span class="tag">Correction</span><p>An interface is not a class. Say "abstract classes and interfaces".</p></div>
+      <p><b>Advantage:</b></p>
+      <ul>
+        <li>Hides complexity.</li>
+        <li>Improves maintainability.</li>
+        <li>Allows flexible implementations.</li>
+        <li>Lets users focus on functionality rather than implementation.</li>
+      </ul>
+      <h3>Interview Tip</h3>
+      <h4>Can we achieve Abstraction without using an abstract class?</h4>
+      <p>Yes. We can achieve abstraction using <b>interfaces</b> as well. In fact, interfaces are often preferred when defining contracts because a class can implement multiple interfaces, whereas it can inherit from only one abstract class.</p>
+      <h4>Does an abstract class have to contain an abstract method?</h4>
+      <p><b>No.</b> An abstract class can have <b>zero or more abstract methods</b>. Declaring a class as abstract simply means it cannot be instantiated directly.</p>
+      <h3>Realtime Example and Advantage</h3>
+      <div class="add"><span class="tag">Example · payroll</span>
+<pre class="cs">public abstract class Employee
+{
+    public string Name;
+    public abstract decimal CalculatePay();                  // WHAT, not HOW
+    public void PrintPayslip() =&gt; Console.WriteLine($"{Name}: {CalculatePay()}");
+}
+
+public class Manager   : Employee { public override decimal CalculatePay() =&gt; 90000 + 15000; }
+public class Developer : Employee { public override decimal CalculatePay() =&gt; 70000; }
+
+public interface IReviewable { void Review(); }             // contract via interface
+
+// var e = new Employee();   // ✗ abstract class can't be instantiated
+Employee e = new Manager { Name = "Asha" };
+e.PrintPayslip();          // payroll never knows how a Manager's pay is calculated</pre>
+        <p>Advantage: payroll code calls <code>CalculatePay()</code> and stays the same when a new role is added.</p>
+      </div>
+    </section>
+
+    <!-- 08 POLYMORPHISM -->
+    <section class="ch" id="poly">
+      <div class="ch-head"><span class="ch-no">08</span><h2>Polymorphism</h2></div>
+      <p>It is one of the four pillars of the OOPs, it allows the same method to behave differently based on the object by implementing the Method overloading (Compile-Time) and Method overriding (Run-Time).</p>
+
+      <h3>Compile-Time polymorphism (Method overloading)</h3>
+      <p>The compiler decides which method to call before the program runs. We can achieve this using the method overloading.</p>
+      <p>Method overloading is compile-time polymorphism. It means creating multiple methods with the same name in the same class but difference in the parameter list. The compiler decides which method to execute.</p>
+      <p>That's why it's also called as:</p>
+      <ul><li>Compile-time Polymorphism</li><li>Static Polymorphism</li><li>Early Binding</li></ul>
+      <h4>Rules for Method Overloading</h4>
+      <ol class="plain"><li>Number of Parameters</li><li>Type of Parameters</li><li>Order of parameter</li></ol>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Payroll
+{
+    public void Pay(int id) { }                       // base version
+    public void Pay(int id, decimal bonus) { }        // ✓ number of parameters
+    public void Pay(string code) { }                  // ✓ type of parameters
+    public void Pay(decimal bonus, int id) { }        // ✓ order of parameters
+    // public int Pay(int id) { return 0; }           // ✗ return type alone: compile error
+}</pre>
+      </div>
+      <div class="note fix"><span class="tag">Add to the rules</span><p>Return type alone is <b>not</b> enough to overload. <code>ref</code>/<code>out</code>/<code>in</code> modifiers do count, but <code>ref</code> vs <code>out</code> alone does not.</p></div>
+
+      <h4>Interview Tip</h4>
+      <p><b>1. Can we overload static methods?</b></p>
+      <div class="add"><span class="tag">Answer</span><p>Yes. <code>static int Add(int a, int b)</code> and <code>static double Add(double a, double b)</code> can live together. <code>Math.Max</code> itself has many overloads.</p></div>
+      <p><b>2. Can constructors be overloaded?</b></p>
+      <div class="add"><span class="tag">Answer</span><p>Yes. <code>Employee()</code>, <code>Employee(int id)</code> and <code>Employee(int id, string name)</code> in one class is constructor overloading (see chapter 05).</p></div>
+      <p><b>3. Can methods be overloaded in different classes?</b></p>
+      <p>No. <b>Method overloading is a concept within the same class</b>.</p>
+      <div class="note fix"><span class="tag">Correction</span><p>Too strong. A derived class can add an overload of an inherited method: <code>Employee.Work()</code> plus <code>Manager.Work(int hours)</code>, and both are callable on a Manager. Safer answer: "Normally within one class, but a derived class can add new overloads of inherited methods."</p></div>
+
+      <h3>Method hiding</h3>
+      <p>It is the process of hiding the child class implementation.</p>
+      <div class="note fix"><span class="tag">Correction</span><p>It's the other way round. The child declares a member with the same signature using <code>new</code>, which hides the <b>parent's</b> member. Which one runs is decided by the <b>reference type at compile time</b>.</p></div>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee { public void Work() =&gt; Console.WriteLine("Employee works"); }
+public class Manager : Employee
+{
+    public new void Work() =&gt; Console.WriteLine("Manager works");
+    public void ApproveLeave() { }
+}
+
+Employee emp = new Manager();
+emp.Work();              // Employee works
+// emp.ApproveLeave();   // ✗ not visible through an Employee reference</pre>
+      </div>
+      <p>See in this reference is Employee but the object is Manager.</p>
+      <p>So the compiler decides what all members access this <b>emp</b> reference.</p>
+      <p>For the reference emp type is <b>employee.</b> So only employee members are accessible.</p>
+
+      <h3>Runtime Polymorphism</h3>
+      <p>Runtime polymorphism is method overriding. It allows the child class to provide its own implementation that is already defined in the base class.</p>
+      <p>We can achieve this using the base method marked as "<b>virtual</b>" and the child method marked as "<b>override</b>".</p>
+      <p>At the runtime CLR decides which method should executes based on the object.</p>
+
+      <h3>Method Overriding (Virtual, override)</h3>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee { public virtual  void Work() =&gt; Console.WriteLine("Employee works"); }
+public class Manager : Employee
+{                       public override void Work() =&gt; Console.WriteLine("Manager works"); }
+
+Employee emp = new Manager();
+emp.Work();              // Manager works</pre>
+      </div>
+      <p>In this still <b>reference</b> type is Employee and <b>object</b> is Manager.</p>
+      <p>Now the <b>CLR</b> says and This decision happens <b>at runtime</b>:</p>
+      <p class="quote">The reference is Employee, but the actual object is Manager. I'll execute the Manager's overridden method.</p>
+      <p><b>First, the compiler checks whether the method is virtual.</b> If it is virtual, the compiler generates a <b>virtual call</b>.</p>
+
+      <h4>The Secret of calling different method</h4>
+      <div class="add"><span class="tag">Picture · the method table (vtable)</span>
+        <div class="mem">
+          <div class="zone"><div class="zl">Employee method table</div>
+            <div class="obj meta"><b>slot: Work()</b>→ Employee.Work</div>
+          </div>
+          <div class="zone"><div class="zl">Manager method table</div>
+            <div class="obj"><b>slot: Work()</b>→ Manager.Work <span class="dim">(override replaced the slot)</span></div>
+          </div>
+        </div>
+        <ol class="steps">
+          <li><span>Every object on the heap carries a pointer to its <b>own type's</b> method table.</span></li>
+          <li><span><code>emp.Work()</code> is a virtual call, so at runtime the CLR follows <code>emp</code> → object → <b>Manager's</b> table.</span></li>
+          <li><span>The Work() slot there points at Manager.Work, so that runs. With <code>new</code> instead of <code>override</code>, Manager gets a <i>separate</i> slot and the Employee slot still points at Employee.Work.</span></li>
+        </ol>
+      </div>
+
+      <h3>Try it: override vs hide</h3>
+      <div class="lab">
+        <div class="lab-bar">
+          <div class="grp" role="group" aria-label="How Manager defines Work"><span class="gl">Manager.Work</span>
+            <button class="chip" data-mode="override" aria-pressed="true">override</button>
+            <button class="chip" data-mode="new" aria-pressed="false">new (hide)</button>
+          </div>
+          <div class="grp" role="group" aria-label="Reference type"><span class="gl">Reference</span>
+            <button class="chip" data-ref="Employee" aria-pressed="true">Employee</button>
+            <button class="chip" data-ref="Manager" aria-pressed="false">Manager</button>
+          </div>
+        </div>
+        <div class="lab-body">
+          <pre class="cs" id="labCode"></pre>
+          <div class="console" aria-live="polite">
+            <div class="zl">Output</div>
+            <div class="out" id="labOut"></div>
+            <div class="why" id="labWhy"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-fig wide" id="hide-vs-override">
+        <div class="fig-head"><h4>Method Hiding (new) vs Method Overriding (virtual / override)</h4><span class="fig-tag">From your notes</span></div>
+        <div class="vs">
+          <div class="vs-col hide">
+            <h4 class="vs-title">1) Method Hiding (<code>new</code>)</h4>
+<pre class="cs">public class Employee
+{
+    public void Work()
+    {
+        Console.WriteLine("Employee Working");
+    }
+}
+public class Manager : Employee
+{
+    public new void Work()   // hiding
+    {
+        Console.WriteLine("Manager Working");
+    }
+}</pre>
+            <div class="vs-run">
+<pre class="cs">// Code
+Employee emp = new Manager();
+emp.Work();</pre>
+              <div class="vs-out"><span>Output</span><b>Employee Working</b></div>
+            </div>
+          </div>
+          <div class="vs-col ovr">
+            <h4 class="vs-title">2) Method Overriding (<code>virtual</code> / <code>override</code>)</h4>
+<pre class="cs">public class Employee
+{
+    public virtual void Work()
+    {
+        Console.WriteLine("Employee Working");
+    }
+}
+public class Manager : Employee
+{
+    public override void Work()
+    {
+        Console.WriteLine("Manager Working");
+    }
+}</pre>
+            <div class="vs-run">
+<pre class="cs">// Code
+Employee emp = new Manager();
+emp.Work();</pre>
+              <div class="vs-out"><span>Output</span><b>Manager Working</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="band">Memory diagram (in both cases)</div>
+        <div class="vs">
+          <div class="vs-col hide">
+            <div class="mem">
+              <div class="zone"><div class="zl">Stack</div><div class="ref">emp <em>→ Manager object</em></div><p class="cap">Type: Employee (Reference Type)</p></div>
+              <div class="zone"><div class="zl">Heap · Manager Object</div>
+                <div class="part"><b>Employee Part</b><code>void Work()</code><small>{ Console.WriteLine("Employee Working"); }</small></div>
+                <div class="part"><b>Manager Part</b><code>void Work()   // hidden</code><small>{ Console.WriteLine("Manager Working"); }</small></div>
+              </div>
+            </div>
+            <p class="cap">The object is still Manager (has both Employee and Manager parts).</p>
+          </div>
+          <div class="vs-col ovr">
+            <div class="mem">
+              <div class="zone"><div class="zl">Stack</div><div class="ref">emp <em>→ Manager object</em></div><p class="cap">Type: Employee (Reference Type)</p></div>
+              <div class="zone"><div class="zl">Heap · Manager Object</div>
+                <div class="part"><b>Employee Part</b><code>virtual void Work()</code><small>{ Console.WriteLine("Employee Working"); }</small></div>
+                <div class="part"><b>Manager Part</b><code>override void Work()</code><small>{ Console.WriteLine("Manager Working"); }</small></div>
+              </div>
+            </div>
+            <p class="cap">The object is still Manager (has both Employee and Manager parts).</p>
+          </div>
+        </div>
+
+        <div class="vs">
+          <div class="vs-col hide">
+            <div class="band small">How the call is resolved (hiding)</div>
+            <div class="resolve">
+              <div class="rbox"><div class="rh">1. Compile Time (Compiler)</div>
+                <div class="flow"><span>emp is of type Employee<br><code>emp.Work();</code></span><i>↓</i><span>Compiler looks at <code>Employee.Work()</code></span><i>↓</i><span>This method is <b>NOT</b> virtual</span><i>↓</i><span>Compiler generates <b>NORMAL CALL</b> to <code>Employee.Work()</code></span></div></div>
+              <div class="rbox"><div class="rh">2. Runtime (CLR)</div>
+                <div class="flow"><span>CLR simply executes the method that compiler asked to call</span><i>↓</i><span class="hit">Calls <code>Employee.Work()</code></span></div></div>
+            </div>
+            <div class="keypt"><b>Key point</b> Decision is taken at <b>COMPILE TIME</b> based on <b>REFERENCE TYPE</b> (Employee).</div>
+            <div class="summ">Summary (hiding): <b>Reference Type</b> decides which method to call.</div>
+          </div>
+          <div class="vs-col ovr">
+            <div class="band small">How the call is resolved (overriding)</div>
+            <div class="resolve">
+              <div class="rbox"><div class="rh">1. Compile Time (Compiler)</div>
+                <div class="flow"><span>emp is of type Employee<br><code>emp.Work();</code></span><i>↓</i><span>Compiler looks at <code>Employee.Work()</code></span><i>↓</i><span>This method <b>IS</b> virtual</span><i>↓</i><span>Compiler generates <b>VIRTUAL CALL</b> (final decision in runtime)</span></div></div>
+              <div class="rbox"><div class="rh">2. Runtime (CLR)</div>
+                <div class="flow"><span>CLR receives the virtual call</span><i>↓</i><span>Which object is emp pointing to?</span><i>↓</i><span class="hit">Manager</span><i>↓</i><span>Does Manager override Work()?</span>
+                  <div class="yn"><div><em class="y">YES</em><span class="hit">Calls <code>Manager.Work()</code></span></div><div><em class="n">NO</em><span>Calls <code>Employee.Work()</code></span></div></div></div></div>
+            </div>
+            <div class="keypt"><b>Key point</b> Decision is taken at <b>RUNTIME</b> based on <b>ACTUAL OBJECT TYPE</b> (Manager).</div>
+            <div class="summ">Summary (overriding): <b>Actual Object</b> decides which method to call.</div>
+          </div>
+        </div>
+
+        <div class="vs bottom">
+          <div>
+            <div class="band small">Quick comparison</div>
+            <div class="tbl" style="margin-top:8px"><table>
+              <thead><tr><th>Aspect</th><th>Method Hiding (new)</th><th>Method Overriding (virtual/override)</th></tr></thead>
+              <tbody>
+                <tr><td>Keyword</td><td><code>new</code></td><td><code>virtual</code> / <code>override</code></td></tr>
+                <tr><td>Binding</td><td>Early Binding (Compile Time)</td><td>Late Binding (Runtime)</td></tr>
+                <tr><td>Decision Based On</td><td>Reference Type</td><td>Actual Object Type</td></tr>
+                <tr><td>Method Call</td><td>Normal Call</td><td>Virtual Call</td></tr>
+                <tr><td>Polymorphism</td><td>Not Achieved</td><td>Achieved</td></tr>
+              </tbody>
+            </table></div>
+            <div class="golden"><b>Golden Rule</b> If you want POLYMORPHISM, use VIRTUAL and OVERRIDE.</div>
+          </div>
+          <div>
+            <div class="band small">Behind the scenes (Virtual Table concept)</div>
+            <div class="vt">
+              <div class="vtc hide"><div class="zl">Employee Type</div><div class="vtt">VTable (Method Table)</div><span>Work()</span><i>↓</i><div class="vtm">Employee.Work()</div></div>
+              <div class="vtc ovr"><div class="zl">Manager Type</div><div class="vtt">VTable (Method Table)</div><span>Work()</span><i>↓</i><div class="vtm">Manager.Work()</div></div>
+            </div>
+            <p class="cap">For virtual methods, CLR uses VTable to find the right implementation based on the actual object type.</p>
+          </div>
+        </div>
+      </div>
+
+      <h4>Overloading - overriding</h4>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Overloading</th><th>Overriding</th><th>Hiding</th></tr></thead>
+        <tbody>
+          <tr><td>Polymorphism</td><td>Compile-time / static / early binding</td><td>Runtime / dynamic / late binding</td><td>Not polymorphism</td></tr>
+          <tr><td>Keyword</td><td>none</td><td><code>virtual</code> + <code>override</code></td><td><code>new</code></td></tr>
+          <tr><td>Signature</td><td>different parameters</td><td>same</td><td>same</td></tr>
+          <tr><td>Decided by</td><td>compiler</td><td>CLR, using the actual object</td><td>compiler, using the reference type</td></tr>
+          <tr><td>Where</td><td>usually same class</td><td>parent → child</td><td>parent → child</td></tr>
+          <tr><td>Return type</td><td>can differ (doesn't count)</td><td>must match</td><td>can differ</td></tr>
+        </tbody>
+      </table></div>
+
+      <h4>Realtime Example and Advantage</h4>
+      <div class="add"><span class="tag">Example · notifications</span>
+<pre class="cs">public class Notifier             { public virtual void Send(string msg) =&gt; Console.WriteLine("Log: " + msg); }
+public class EmailNotifier : Notifier { public override void Send(string msg) { /* SMTP */ } }
+public class SmsNotifier   : Notifier { public override void Send(string msg) { /* SMS API */ } }
+
+void NotifyAll(List&lt;Notifier&gt; channels, string msg)
+{
+    foreach (var c in channels) c.Send(msg);   // one call, each channel sends its own way
+}</pre>
+        <p>Advantage: the caller is written once against the parent type. A new <code>WhatsAppNotifier</code> needs a new class only, with no change to <code>NotifyAll</code>.</p>
+      </div>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>What happens if the child redefines a method without virtual/override or new?</summary><div class="a"><p>It still hides the parent method, but the compiler gives warning CS0108 asking you to write <code>new</code> if hiding was intended.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 09 UPCASTING -->
+    <section class="ch" id="upcast">
+      <div class="ch-head"><span class="ch-no">09</span><h2>Up-casting</h2></div>
+      <p>It is the process of converting a child class object into parent class reference.</p>
+      <h4>Instantiation</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Manager mgr  = new Manager();
+Employee emp = mgr;                 // upcasting (implicit)
+
+Employee emp2 = new Manager();      // most common form</pre>
+      </div>
+      <p><b>Notes:</b></p>
+      <ul>
+        <li>With this upcasting initialization, <b>we can access only parent class members</b>.</li>
+        <li>Up casting is safe.</li>
+      </ul>
+
+      <h3>Real life example</h3>
+      <p>Think of a company. Your HR system stores everyone as an Employee.</p>
+      <p>Why? Because:</p>
+      <ul>
+        <li>Developer <b>is an</b> Employee.</li>
+        <li>Tester <b>is an</b> Employee.</li>
+        <li>Manager <b>is an</b> Employee.</li>
+      </ul>
+      <p>This is Upcasting.</p>
+      <h4>Why is Upcasting So Important?</h4>
+      <p>Without it, you'd have to write:</p>
+      <div class="add"><span class="tag">Example · without upcasting</span>
+<pre class="cs">List&lt;Manager&gt;   managers   = new();
+List&lt;Developer&gt; developers = new();
+List&lt;Tester&gt;    testers    = new();
+// three lists, three loops, every time</pre>
+      </div>
+      <p>Instead, you can write, and store all employee types together.</p>
+      <div class="add"><span class="tag">Example · with upcasting</span>
+<pre class="cs">List&lt;Employee&gt; employees = new()
+{
+    new Manager(), new Developer(), new Tester()
+};</pre>
+      </div>
+      <p><b>This is one of the biggest benefits of OOP.</b></p>
+
+      <h3>Upcasting + Runtime Polymorphism</h3>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Manager();
+emp.Work();          // Manager.Work() runs</pre>
+      </div>
+      <p><b>Code Steps:</b> Because:</p>
+      <ol class="plain">
+        <li>We performed <b>Upcasting</b>.</li>
+        <li>Work() is virtual.</li>
+        <li>The CLR checks the <b>actual object</b>.</li>
+        <li>The actual object is Manager.</li>
+        <li>It is called Manager.Work().</li>
+      </ol>
+      <p>This is Runtime Polymorphism in action.</p>
+
+      <h3>Q1. Why do we use Upcasting?</h3>
+      <p>We use Upcasting to write <b>generic</b> and <b>reusable</b> code. It enables runtime polymorphism, allows <b>collections of base types to hold child objects</b>, and is widely used in interfaces, dependency injection, and design patterns.</p>
+    </section>
+
+    <!-- 10 DOWNCASTING -->
+    <section class="ch" id="downcast">
+      <div class="ch-head"><span class="ch-no">10</span><h2>Down-casting</h2></div>
+      <p>It is the process of converting the upcasted base class reference into child class reference.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Manager();     // upcast
+Manager mgr  = (Manager)emp;      // downcast (explicit)</pre>
+      </div>
+      <p><b>Notes:</b></p>
+      <ul>
+        <li>The object will not be changed.</li>
+        <li>Only a new reference is created for this object. (check below image)</li>
+      </ul>
+      <h3>Memory Visualization</h3>
+      <div class="add"><span class="tag">Picture</span>
+        <div class="mem">
+          <div class="zone"><div class="zl">Stack · two references</div>
+            <div class="ref">Employee emp <em>→ obj #7</em></div>
+            <div class="ref">Manager mgr <em>→ obj #7</em></div>
+          </div>
+          <div class="zone"><div class="zl">Heap · still one object</div>
+            <div class="obj"><b>Manager #7</b>Name, Id <span class="dim">(Employee part, visible via emp)</span><br>ApproveLeave() <span class="dim">(Manager part, visible via mgr)</span></div>
+          </div>
+        </div>
+      </div>
+      <ul>
+        <li>There is still <b>only one object</b>.</li>
+        <li>We're just creating another reference to the same object.</li>
+      </ul>
+      <p>Now We Can Access Everything: (after down casting)</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">mgr.Name = "Asha";     // ✓ Employee member
+mgr.Work();            // ✓ Employee member
+mgr.ApproveLeave();    // ✓ Manager member</pre>
+      </div>
+      <h3>Why is Upcasting safe but Downcasting unsafe?</h3>
+      <p>Upcasting is always safe because every child object is also a parent object.</p>
+      <p>But downcasting is unsafe because not every parent object is a child object.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Developer();
+Manager mgr  = (Manager)emp;      // ✗ runtime InvalidCastException: a Developer is not a Manager</pre>
+      </div>
+    </section>
+
+    <!-- 11 IS AS -->
+    <section class="ch" id="isas">
+      <div class="ch-head"><span class="ch-no">11</span><h2>IS, AS</h2></div>
+      <h3>Is</h3>
+      <p>It checks whether the object is compatible with the specified type.</p>
+      <ul><li>It checks the actual runtime type of the object.</li></ul>
+      <p>It returns:</p>
+      <ul><li>true</li><li>false</li></ul>
+      <h4>Example</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Manager();
+
+Console.WriteLine(emp is Employee);   // True
+Console.WriteLine(emp is Manager);    // True
+Console.WriteLine(emp is Developer);  // False</pre>
+      </div>
+      <h4>Visual Memory</h4>
+      <div class="add"><span class="tag">Picture</span>
+        <div class="mem">
+          <div class="zone"><div class="zl">Stack</div><div class="ref">Employee emp <em>→ obj #7</em></div></div>
+          <div class="zone"><div class="zl">Heap</div><div class="obj"><b>Manager #7</b><span class="dim">is checks THIS type, not "Employee emp"</span></div></div>
+        </div>
+      </div>
+      <p>Notice something important. The is operator <b>does not check the reference type.</b> It checks the <b>actual object type</b>.</p>
+      <h4>Safe Down-casting</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">if (emp is Manager)
+{
+    Manager mgr = (Manager)emp;
+    mgr.ApproveLeave();
+}</pre>
+      </div>
+      <p>Now your application won't crash. If the object type is the same as the reference type then only it will allow.</p>
+      <div class="note fix"><span class="tag">Correction</span><p><code>is</code> doesn't need the exact same type. It allows the cast when the object is that type <b>or derived from it</b> (or implements the interface). If <code>SeniorManager : Manager</code>, then <code>emp is Manager</code> is true for a SeniorManager.</p></div>
+      <h4>Better Syntax (C# 7+)</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">if (emp is Manager mgr)
+{
+    mgr.ApproveLeave();
+}</pre>
+      </div>
+      <p>This does two things:</p>
+      <ol class="plain"><li><b>Checks whether emp is a Manager.</b></li><li><b>Creates a Manager variable (mgr) if the check succeeds.</b></li></ol>
+      <p>This is the syntax you'll often see in modern .NET code.</p>
+      <h4>Real World example</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">foreach (Employee e in employees)
+{
+    if (e is Manager m)
+        m.ApproveLeave();
+}</pre>
+      </div>
+      <p>Only Manager objects will execute the method.</p>
+
+      <h3>AS</h3>
+      <p>It performs safe casting.</p>
+      <p>Instead of throwing an exception when the cast fails, it returns <b>null</b>.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Developer();
+Manager mgr = emp as Manager;     // null, no exception</pre>
+      </div>
+      <p>No exception. Your application continues running.</p>
+      <h4>Example 1 (Successful Cast)</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Manager();
+Manager mgr = emp as Manager;     // mgr is NOT null
+mgr.ApproveLeave();</pre>
+      </div>
+      <p>Because the cast succeeded.</p>
+      <h4>Why use as?</h4>
+      <p>Suppose you're working with thousands of objects. You don't want your application to crash because one object isn't a Manager.</p>
+      <p>Instead:</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">foreach (Employee e in employees)
+{
+    Manager m = e as Manager;
+    if (m != null)
+        m.ApproveLeave();
+}</pre>
+      </div>
+      <p>This is safe and clean.</p>
+      <div class="note fix"><span class="tag">Add</span><p><code>as</code> works only with reference types and nullable value types. <code>obj as int</code> won't compile; <code>obj as int?</code> will.</p></div>
+
+      <h3>is vs as</h3>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th><code>is</code></th><th><code>as</code></th></tr></thead>
+        <tbody>
+          <tr><td>Purpose</td><td>Type check</td><td>Safe cast</td></tr>
+          <tr><td>Returns</td><td><code>true</code> / <code>false</code></td><td>the cast reference, or <code>null</code></td></tr>
+          <tr><td>On failure</td><td><code>false</code>, no exception</td><td><code>null</code>, no exception</td></tr>
+          <tr><td>Works with</td><td>any type</td><td>reference and nullable types</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Modern C# Recommendation</h3>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">if (emp is Manager mgr)
+    mgr.ApproveLeave();</pre>
+      </div>
+      <p>This combines the type check and the cast in one statement.</p>
+      <p>It's the preferred style in modern C#.</p>
+      <h3>Q1. Which one do you prefer?</h3>
+      <p>In modern C#:</p>
+      <ul>
+        <li>Prefer <b>pattern matching with is</b> for most cases.</li>
+        <li>Use <b>as</b> when you specifically want a nullable result and will check for null.</li>
+      </ul>
+    </section>
+
+    <!-- 12 ACCESS MODIFIERS -->
+    <section class="ch" id="access">
+      <div class="ch-head"><span class="ch-no">12</span><h2>Access Modifiers</h2></div>
+      <p>It will define who can access the class, method, constructors, fields. This will provide security to classes and members.</p>
+      <ul><li>public</li><li>private</li><li>protected</li><li>internal</li><li>protected internal</li><li>private protected</li></ul>
+
+      <h3>Try it</h3>
+      <p>Who can touch <code>Employee.Salary</code>? Pick a modifier.</p>
+      <div class="am-pick" role="group" aria-label="Access modifier" id="amPick"></div>
+      <div class="am-world">
+        <div class="asm"><div class="zl">Assembly A · EmployeeManagement.Business</div>
+          <div class="spot" data-k="0"><span>Inside Employee itself</span><span class="st"></span></div>
+          <div class="spot" data-k="1"><span>Manager : Employee</span><span class="st"></span></div>
+          <div class="spot" data-k="2"><span>PayrollService (unrelated)</span><span class="st"></span></div>
+        </div>
+        <div class="asm"><div class="zl">Assembly B · EmployeeManagement.Web</div>
+          <div class="spot" data-k="3"><span>Contractor : Employee</span><span class="st"></span></div>
+          <div class="spot" data-k="4"><span>Program (unrelated)</span><span class="st"></span></div>
+        </div>
+      </div>
+      <p class="am-say" id="amSay"></p>
+
+      <h3>Public</h3>
+      <p>Public members can be accessed from anywhere.</p>
+      <p>It doesn't matter if it's:</p>
+      <ul><li>Same class ✅</li><li>Child class ✅</li><li>Different class ✅</li><li>Different project (assembly) ✅</li></ul>
+      <p>Everyone can access it.</p>
+      <p><b>Q1: Can a public member be accessed from another project?</b></p>
+      <p>✅ Yes. If the class is public and the assembly is referenced, then a public member is accessible from another project.</p>
+
+      <h3>Private</h3>
+      <p>Private members can be accessed only within the same class.</p>
+      <p>Not by:</p>
+      <ul><li>Child class ❌</li><li>Other class ❌</li><li>Other project ❌</li></ul>
+      <p>Only the class that owns it.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class BankAccount
+{
+    private decimal balance;
+
+    public void Deposit(decimal amount)
+    {
+        if (amount &lt;= 0) throw new ArgumentException("Invalid amount");
+        balance += amount;
+    }
+
+    public decimal GetBalance() =&gt; balance;
+}
+
+var acc = new BankAccount();
+acc.Deposit(500);        // ✓
+// acc.balance = 1000000; // ✗ compile error, private</pre>
+      </div>
+      <p>Now only the class controls how balance changes. This is a perfect example of <b>Encapsulation</b>.</p>
+
+      <h3>Protected</h3>
+      <p>A protected member can be accessed by the same class or derived(child) class.</p>
+      <p>✅ Inside the same class.</p>
+      <p>✅ Inside a derived (child) class.</p>
+      <p>❌ Not from other unrelated classes.</p>
+      <h4>Example</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    protected decimal salary = 50000;
+}
+
+public class Manager : Employee
+{
+    public void ShowSalary() =&gt; Console.WriteLine(salary);   // ✓ child accesses protected
+}
+
+// Program.cs
+Manager m = new Manager();
+m.ShowSalary();          // ✓ works</pre>
+      </div>
+      <p>This can be accessed. Because we are calling the public method of Manager (child). So salary is accessed by child class.</p>
+      <p><code>Program.cs calls → child Method → protected salary</code></p>
+      <p>But in this:</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Program.cs
+Manager m = new Manager();
+Console.WriteLine(m.salary);   // ✗ compile error</pre>
+      </div>
+      <p>The caller is <b>Program</b>, not <b>Manager</b>. The program is <b>not</b> inheriting from Employee.</p>
+
+      <h3>Internal</h3>
+      <p>An <b>Internal</b> member or class can be accessed only within the same assembly (Project).</p>
+      <p><b>Notes:</b></p>
+      <ul>
+        <li><b>Namespace</b> is used to organize code.</li>
+        <li><b>Assembly</b> is the compiled output (.dll or .exe) and is what internal is based on.</li>
+      </ul>
+      <h4>Example</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Project: EmployeeManagement.Business
+public class Employee
+{
+    internal decimal CalculateSalary() =&gt; 50000;
+}</pre>
+      </div>
+      <p><b>In the same Project:</b></p>
+      <p>Project: EmployeeManagement.Business</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Project: EmployeeManagement.Business
+public class PayrollService
+{
+    public void Run() =&gt; new Employee().CalculateSalary();   // ✓
+}</pre>
+      </div>
+      <p>Works perfectly because both classes are in the same Project (Assembly).</p>
+      <p><b>In the Different Project:</b></p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Project: EmployeeManagement.Web  (references Business)
+var emp = new Employee();
+emp.CalculateSalary();     // ✗ compile error</pre>
+      </div>
+      <p>Because CalculateSalary() <b>is internal</b> and not accessible.</p>
+
+      <h3>Protected Internal</h3>
+      <p>This simply means <b>protected OR internal.</b></p>
+      <p>A member marked protected internal can be accessed:</p>
+      <ul>
+        <li>✅ From any class in the <b>same assembly</b> (internal).</li>
+        <li>✅ From a <b>derived class</b>, even if it's in a different assembly (protected).</li>
+      </ul>
+      <div class="add"><span class="tag">Example · setup</span>
+<pre class="cs">// Assembly A
+public class Employee
+{
+    protected internal decimal Bonus = 5000;
+}</pre>
+      </div>
+      <h4>Same assembly, unrelated class</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Assembly A
+class Payroll { void Run() =&gt; Console.WriteLine(new Employee().Bonus); }   // ✓</pre>
+      </div>
+      <p>✅ Because of the <b>internal</b> part. No inheritance is needed.</p>
+      <h4>Different assembly, derived class</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Assembly B
+class Contractor : Employee { void Show() =&gt; Console.WriteLine(Bonus); }   // ✓</pre>
+      </div>
+      <p>✅ Because of the <b>protected</b> part. Inheritance allows access.</p>
+      <h4>Different assembly, unrelated class</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Assembly B
+class Report { void Run() =&gt; Console.WriteLine(new Employee().Bonus); }    // ✗</pre>
+      </div>
+      <p>❌ Because:</p>
+      <ul><li>Not in the same assembly ❌</li><li>Not a derived class ❌</li></ul>
+      <p>Neither condition is true.</p>
+      <h4>Comparison</h4>
+      <div class="tbl"><table>
+        <thead><tr><th>Caller</th><th>protected</th><th>internal</th><th>protected internal</th></tr></thead>
+        <tbody>
+          <tr><td>Same assembly, derived</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Same assembly, unrelated</td><td>❌</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Other assembly, derived</td><td>✅</td><td>❌</td><td>✅</td></tr>
+          <tr><td>Other assembly, unrelated</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>private protected</h3>
+      <p>Then private protected is <b>protected AND private</b>. The member is accessible <b>only if BOTH conditions are true</b>.</p>
+      <div class="note fix"><span class="tag">Correction</span><p>It is <b>protected AND internal</b> (not "and private"). Your two conditions below are exactly right: same assembly <i>and</i> derived class.</p></div>
+      <p>It can only be accessed:</p>
+      <ul><li>✅ In the <b>same assembly</b></li><li>✅ By a <b>derived class</b></li></ul>
+      <p>Both must be true.</p>
+      <h4>Example</h4>
+      <div class="add"><span class="tag">Example · setup</span>
+<pre class="cs">// Assembly A
+public class Employee
+{
+    private protected decimal Bonus = 5000;
+}</pre>
+      </div>
+      <p><b>Same assembly + Derived class</b></p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Assembly A
+class Manager : Employee { void Show() =&gt; Console.WriteLine(Bonus); }      // ✓</pre>
+      </div>
+      <ul><li>Same Assembly ✅</li><li>Derived Class ✅</li></ul>
+      <p>Both conditions are satisfied.</p>
+      <p><b>Same assembly + Unrelated class</b></p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Assembly A
+class Payroll { void Run() =&gt; Console.WriteLine(new Employee().Bonus); }   // ✗</pre>
+      </div>
+      <ul><li>Same Assembly ✅</li><li>Derived Class ❌</li></ul>
+      <p>Fails because both conditions are required.</p>
+      <p><b>Different assembly + Derived class:</b></p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">// Assembly B
+class Contractor : Employee { void Show() =&gt; Console.WriteLine(Bonus); }   // ✗</pre>
+      </div>
+      <ul><li>Same Assembly ❌</li><li>Derived Class ✅</li></ul>
+      <p>Again, one condition fails.</p>
+
+      <h3>Final Comparison</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Modifier</th><th>Same class</th><th>Derived, same assembly</th><th>Other class, same assembly</th><th>Derived, other assembly</th><th>Other class, other assembly</th></tr></thead>
+        <tbody id="amTable"></tbody>
+      </table></div>
+      <div class="qa"><div class="label">Interview</div>
+        <details><summary>What is the default access of a class member, and of a top-level class?</summary><div class="a"><p>Members default to <code>private</code>. A top-level class defaults to <code>internal</code>.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 13 PROPERTIES -->
+    <section class="ch" id="props">
+      <div class="ch-head"><span class="ch-no">13</span><h2>Properties</h2></div>
+      <p>Property provides controlled access to Data in class.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public string Name { get; set; }</pre>
+      </div>
+      <ul>
+        <li>Name → Property</li>
+        <li>string → Property type</li>
+        <li>get → allows reading</li>
+        <li>set → allows assigning/changing</li>
+      </ul>
+      <h4>Usage</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">Employee emp = new Employee();
+emp.Name = "Asha";              // set
+Console.WriteLine(emp.Name);    // get</pre>
+      </div>
+
+      <h3>Field vs Property</h3>
+      <h4>Public field</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee { public int Age; }
+emp.Age = -50;      // nothing stops this</pre>
+      </div>
+      <p>There is no built-in control between the caller and the field.</p>
+      <ul><li>A field is a variable that stores data directly inside a class.</li></ul>
+      <h4>Property</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    private int age;                 // backing field (storage)
+    public int Age                   // property (access mechanism)
+    {
+        get { return age; }
+        set
+        {
+            if (value &lt; 18) throw new ArgumentException("Age must be 18+");
+            age = value;
+        }
+    }
+}</pre>
+      </div>
+      <p>This gives you a place to control how the value is read or changed. Here we will implement the strong encapsulation.</p>
+      <ul>
+        <li>A property is <b>not storage itself</b>.</li>
+        <li>It is an <b>access mechanism</b> that reads from and writes to storage (typically a <b>backing field</b>).</li>
+      </ul>
+
+      <h3>Auto-Implemented Property</h3>
+      <p>It provides the default logic. Like get set.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public string Name { get; set; }
+
+// the compiler generates roughly:
+private string &lt;Name&gt;k__BackingField;
+public string Name
+{
+    get { return &lt;Name&gt;k__BackingField; }
+    set { &lt;Name&gt;k__BackingField = value; }
+}</pre>
+      </div>
+      <p><b>get</b> defines how the property's value is read, while <b>set</b> defines how the property's value is assigned. An auto-property lets the compiler generate the backing field automatically, while still exposing the data through a property rather than directly exposing a field.</p>
+      <p>This is called an auto-implemented property.</p>
+      <p>You don't explicitly create the backing field.</p>
+      <p>The compiler creates a hidden backing field for you.</p>
+
+      <h3>Read-Only Property</h3>
+      <p>Now you can <b>read</b> the property, but you cannot normally assign it from outside the class.</p>
+      <h4>Example</h4>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    public int Id { get; }
+
+    public Employee(int id)
+    {
+        Id = id;          // ✓ the constructor can initialize it
+    }
+}
+
+var emp = new Employee(101);
+// emp.Id = 200;      // ✗ compile error</pre>
+      </div>
+      <p>This assigning the data will give a compile error.</p>
+      <p>But the constructor can initialize it.</p>
+
+      <h3>Init-only property</h3>
+      <p>We can initialize the value in the constructor using the property name. The advantage is readability.</p>
+      <p>A get-only property can typically be assigned inside the constructor. An init property can also be assigned during object initialization using an object initializer, but after the object has been created, it becomes read-only.</p>
+      <div class="add"><span class="tag">Example</span>
+<pre class="cs">public class Employee
+{
+    public int Id { get; init; }
+    public string Name { get; init; }
+    public string Dept { get; init; }
+    public string Email { get; init; }
+}
+
+var emp = new Employee
+{
+    Id = 101,
+    Name = "Asha",
+    Dept = "IT",
+    Email = "asha@corp.com"
+};
+// emp.Name = "Ravi";   // ✗ compile error, init window closed</pre>
+      </div>
+      <p>Like this we can assign the value, when we have more properties.</p>
+
+      <h3>get; - get;init; - get;set;</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Shape</th><th>Constructor</th><th>Object initializer</th><th>After creation</th></tr></thead>
+        <tbody>
+          <tr><td><code>{ get; }</code></td><td>✓</td><td>✗</td><td>✗</td></tr>
+          <tr><td><code>{ get; init; }</code></td><td>✓</td><td>✓</td><td>✗</td></tr>
+          <tr><td><code>{ get; set; }</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 14 QUIZ -->
+    <section class="ch" id="quiz">
+      <div class="ch-head"><span class="ch-no">14</span><h2>Quiz</h2></div>
+      <p class="lede">Ten questions on the traps above. Tap an answer to see why.</p>
+      <div class="quiz" id="quizBox"></div>
+      <div class="score" style="margin-top:16px"><span>Score <span class="n" id="scoreN">0 / 10</span></span><button class="btn" id="resetQuiz" type="button">Start over</button></div>
+    </section>
+
+    <section class="ch" id="next">
+      <div class="ch-head"><span class="ch-no">→</span><h2>Next in your roadmap</h2></div>
+      <div class="road">
+        <span>sealed class &amp; method</span><span>virtual vs override vs new</span><span>Abstract class vs Interface</span>
+        <span>Constructors: default, parameterized, copy, private, chaining</span><span>Destructor (Finalizer)</span>
+        <span>object: ToString, Equals, GetHashCode, ReferenceEquals</span><span>Object Initializer</span><span>Anonymous Object</span>
+        <span>Association · Aggregation · Composition</span><span>Composition vs Inheritance</span>
+        <span>SOLID</span><span>Dependency Injection</span>
+      </div>
+    </section>
+
+    <footer>All text outside the blue and amber boxes is copied from the OOPs tab of your "Learning" doc. Your doc's screenshots couldn't be exported, so the blue boxes are new examples written to match them.</footer>
+  </main>
+</div>
+<script>
+(function () {
+  // tiny C# highlighter
+  var KW = "public|private|protected|internal|static|class|interface|abstract|virtual|override|new|void|int|string|decimal|bool|return|if|else|foreach|in|var|get|set|init|this|base|throw|null|true|false|using|sealed|readonly|const|object|long";
+  var re = new RegExp('(//[^\\n]*)|("(?:[^"\\\\]|\\\\.)*")|\\b(' + KW + ')\\b|\\b([A-Z][A-Za-z0-9]*)\\b', 'g');
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function hl(src) {
+    var out = "", last = 0, m;
+    re.lastIndex = 0;
+    while ((m = re.exec(src))) {
+      out += esc(src.slice(last, m.index));
+      var cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "k" : "t";
+      out += '<span class="' + cls + '">' + esc(m[0]) + "</span>";
+      last = re.lastIndex;
+    }
+    return out + esc(src.slice(last));
+  }
+  function paint(el) { el.innerHTML = hl(el.textContent); }
+  document.querySelectorAll("pre.cs").forEach(function (p) { if (p.id !== "labCode") paint(p); });
+
+  // polymorphism lab
+  var mode = "override", refType = "Employee";
+  var codeEl = document.getElementById("labCode"), outEl = document.getElementById("labOut"), whyEl = document.getElementById("labWhy");
+  function renderLab() {
+    var parent = mode === "override" ? "public virtual void Work()" : "public void Work()";
+    var child = mode === "override" ? "public override void Work()" : "public new void Work()";
+    var src =
+      "class Employee {\n    " + parent + "\n        => Console.WriteLine(\"Employee works\");\n}\n" +
+      "class Manager : Employee {\n    " + child + "\n        => Console.WriteLine(\"Manager works\");\n}\n\n" +
+      refType + " x = new Manager();\nx.Work();";
+    codeEl.textContent = src; paint(codeEl);
+    var runsManager = mode === "override" || refType === "Manager";
+    outEl.textContent = runsManager ? "Manager works" : "Employee works";
+    if (mode === "override") {
+      whyEl.textContent = refType === "Employee"
+        ? "Overriding: the CLR looks at the actual object (Manager) at runtime and uses its slot in the vtable. The reference type doesn't matter."
+        : "Overriding: the object is a Manager, so Manager's version runs.";
+    } else {
+      whyEl.textContent = refType === "Employee"
+        ? "Hiding: the compiler binds to the reference type (Employee). Manager's version is invisible through an Employee reference."
+        : "Hiding: the reference type is Manager, so the compiler picks Manager's version.";
+    }
+  }
+  document.querySelectorAll(".lab .chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var grpAttr = b.dataset.mode ? "data-mode" : "data-ref";
+      document.querySelectorAll(".lab .chip[" + grpAttr + "]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      if (b.dataset.mode) mode = b.dataset.mode; else refType = b.dataset.ref;
+      renderLab();
+    });
+  });
+  renderLab();
+
+  // access matrix: [self, derived same asm, other same asm, derived other asm, other other asm]
+  var AM = {
+    "public": [1,1,1,1,1, "Anyone, anywhere, as long as the assembly is referenced."],
+    "private": [1,0,0,0,0, "Only Employee's own code. Inherited by Manager, but not accessible."],
+    "protected": [1,1,0,1,0, "Employee and any class derived from it, in any assembly."],
+    "internal": [1,1,1,0,0, "Any code in HR.Core.dll. Nothing outside the assembly."],
+    "protected internal": [1,1,1,1,0, "protected OR internal: anything in the same assembly, plus derived classes anywhere."],
+    "private protected": [1,1,0,0,0, "protected AND internal: only derived classes that are also in the same assembly."]
+  };
+  var pick = document.getElementById("amPick"), say = document.getElementById("amSay");
+  function setAM(name) {
+    var row = AM[name];
+    pick.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(c.dataset.m === name)); });
+    document.querySelectorAll(".spot").forEach(function (s) {
+      var ok = row[+s.dataset.k] === 1;
+      s.classList.toggle("yes", ok); s.classList.toggle("no", !ok);
+      s.querySelector(".st").textContent = ok ? "✓ access" : "✗ no access";
+    });
+    say.innerHTML = "<b>" + name + " decimal Salary</b>: " + row[5];
+  }
+  Object.keys(AM).forEach(function (k) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.dataset.m = k; b.textContent = k;
+    b.addEventListener("click", function () { setAM(k); });
+    pick.appendChild(b);
+  });
+  setAM("protected");
+  var tb = document.getElementById("amTable");
+  Object.keys(AM).forEach(function (k) {
+    var tr = document.createElement("tr");
+    var h = "<td><code>" + k + "</code></td>";
+    for (var i = 0; i < 5; i++) h += "<td>" + (AM[k][i] ? "✓" : "✗") + "</td>";
+    tr.innerHTML = h; tb.appendChild(tr);
+  });
+
+  // quiz
+  var Q = [
+    { q: "Manager hides Work() with `new`. What prints?", code: 'Employee e = new Manager();\ne.Work();', o: ["Manager works", "Employee works", "Compile error"], a: 1, why: "With hiding, the reference type (Employee) decides at compile time." },
+    { q: "Same setup, but Work() is virtual in Employee and override in Manager. What prints?", code: 'Employee e = new Manager();\ne.Work();', o: ["Manager works", "Employee works", "Both lines"], a: 0, why: "Overriding dispatches on the actual object at runtime." },
+    { q: "private protected means…", o: ["protected OR internal", "protected AND internal", "protected AND private"], a: 1, why: "Derived class AND same assembly. protected internal is the OR version." },
+    { q: "Can two methods differ only by return type?", o: ["Yes", "No, it won't compile", "Only if one is static"], a: 1, why: "The return type is not part of the signature used for overloading." },
+    { q: "What happens here?", code: 'object o = 10;\nlong x = (long)o;', o: ["x is 10", "InvalidCastException", "Compile error"], a: 1, why: "Unboxing must use the exact boxed type: (int)o, then convert to long." },
+    { q: "SeniorManager : Manager. For a SeniorManager object, `emp is Manager` is…", o: ["true", "false", "a compile error"], a: 0, why: "is checks compatibility, so derived types match too." },
+    { q: "Employee has `private decimal _salary`. In Manager : Employee, the field is…", o: ["Not inherited at all", "Inherited but not accessible from Manager's code", "Inherited and accessible"], a: 1, why: "It exists inside every Manager object; only Employee's code can touch it." },
+    { q: "How many times does a static constructor run?", o: ["Once per object", "Once, before first use of the type", "Every time a static method is called"], a: 1, why: "The CLR runs it once, before the first instance or static member access." },
+    { q: "Salary is protected in Employee. In Program.cs, which line compiles?", code: 'var m = new Manager();\nm.ShowSalary();   // A: public method in Manager\nm.Salary = 1;     // B', o: ["Only A", "Only B", "Both"], a: 0, why: "Manager can read Salary inside its own method, but Program is not derived from Employee." },
+    { q: "Which constructor initializers are allowed on one constructor?", o: ["this(...) and base(...) together", "Only one of this(...) or base(...)", "Neither, the compiler adds them"], a: 1, why: "A constructor gets exactly one initializer." }
+  ];
+  var box = document.getElementById("quizBox"), scoreEl = document.getElementById("scoreN"), score = 0;
+  function tick(s) { return s.replace(/`([^`]+)`/g, function (_, c) { return "<code>" + c.replace(/</g, "&lt;") + "</code>"; }); }
+  function buildQuiz() {
+    box.innerHTML = ""; score = 0; scoreEl.textContent = "0 / " + Q.length;
+    Q.forEach(function (item, i) {
+      var card = document.createElement("div"); card.className = "qcard";
+      var html = '<p class="qt">' + (i + 1) + ". " + tick(item.q) + "</p>";
+      if (item.code) html += '<pre class="cs">' + hl(item.code) + "</pre>";
+      html += '<div class="opts"></div><div class="explain" hidden></div>';
+      card.innerHTML = html;
+      var opts = card.querySelector(".opts"), ex = card.querySelector(".explain");
+      item.o.forEach(function (txt, j) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "opt"; b.textContent = txt;
+        b.addEventListener("click", function () {
+          opts.querySelectorAll(".opt").forEach(function (x, k) { x.disabled = true; if (k === item.a) x.classList.add("right"); });
+          if (j === item.a) { score++; ex.innerHTML = "<b style='color:var(--ok)'>Correct.</b> " + item.why; }
+          else { b.classList.add("wrong"); ex.innerHTML = "<b style='color:var(--bad)'>Not quite.</b> " + item.why; }
+          ex.hidden = false; scoreEl.textContent = score + " / " + Q.length;
+        });
+        opts.appendChild(b);
+      });
+      box.appendChild(card);
+    });
+  }
+  document.getElementById("resetQuiz").addEventListener("click", buildQuiz);
+  buildQuiz();
+
+  // active chapter in rail
+  var links = Array.prototype.slice.call(document.querySelectorAll("#toc a"));
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + en.target.id); });
+        }
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    document.querySelectorAll("section.ch[id]").forEach(function (s) { io.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>
