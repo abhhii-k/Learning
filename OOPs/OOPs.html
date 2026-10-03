@@ -79,6 +79,11 @@ body {
 
 /* rail */
 nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; }
+@media (min-width: 861px) {
+  nav.rail { max-height: calc(100vh - env(safe-area-inset-top, 0px) - 48px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; padding-right: 4px; }
+}
+nav.rail .grp-l { font: 600 10.5px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 12px 10px 4px; }
+@media (max-width: 860px) { nav.rail .grp-l { display: none; } }
 nav.rail .label { font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 nav.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: ch; }
 nav.rail a {
@@ -454,6 +459,7 @@ td.ok { color: var(--ok); font-weight: 600; } td.no { color: var(--bad); font-we
   <nav class="rail" aria-label="Chapters">
     <div class="label">Chapters</div>
     <ol id="toc">
+      <li class="grp-l" aria-hidden="true">Your notes</li>
       <li><a href="#class"><span>01</span>Class &amp; Object</a></li>
       <li><a href="#static"><span>02</span>Static</a></li>
       <li><a href="#inherit"><span>03</span>Inheritance</a></li>
@@ -467,6 +473,7 @@ td.ok { color: var(--ok); font-weight: 600; } td.no { color: var(--bad); font-we
       <li><a href="#isas"><span>11</span>IS, AS</a></li>
       <li><a href="#access"><span>12</span>Access Modifiers</a></li>
       <li><a href="#props"><span>13</span>Properties</a></li>
+      <li class="grp-l" aria-hidden="true">New lessons</li>
       <li><a href="#ctors"><span>14</span>Constructors &amp; Destructor</a></li>
       <li><a href="#sealed"><span>15</span>sealed</a></li>
       <li><a href="#absint"><span>16</span>Abstract vs Interface</a></li>
@@ -3033,7 +3040,19 @@ Assert.Single(service.GetAll());</pre>
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) {
-          links.forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + en.target.id); });
+          links.forEach(function (a) {
+            var on = a.getAttribute("href") === "#" + en.target.id;
+            a.classList.toggle("active", on);
+            if (on) {
+              var rail = a.closest("nav.rail"), list = a.closest("ol");
+              var box = (rail && rail.scrollHeight > rail.clientHeight) ? rail : list;
+              if (box) {
+                var r = a.getBoundingClientRect(), b = box.getBoundingClientRect();
+                if (r.top < b.top + 8 || r.bottom > b.bottom - 8) box.scrollTop += r.top - b.top - box.clientHeight / 2 + r.height / 2;
+                if (r.left < b.left || r.right > b.right) box.scrollLeft += r.left - b.left - box.clientWidth / 2 + r.width / 2;
+              }
+            }
+          });
         }
       });
     }, { rootMargin: "-30% 0px -60% 0px" });
