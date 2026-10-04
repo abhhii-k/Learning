@@ -866,7 +866,7 @@ m.Name = "Asha";      // inherited from Employee
 m.Work();             // inherited from Employee
 m.ApproveLeave();     // its own</pre>
       </div>
-      <p><b>Note:</b> The child class can not inherit the Private members static members and constructor.</p>
+      <p><b>Note:</b> The child class can not inherit the Private members, static members and constructors.</p>
       <div class="note fix"><span class="tag">Correction</span><p>Only constructors are truly not inherited. <b>Private members are inherited</b> (they exist inside the Manager object) but are not <i>accessible</i> from Manager's code. Public static members are reachable through the child too: <code>Manager.Company</code> works.</p></div>
 
       <h3>Types of inheritance</h3>
