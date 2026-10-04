@@ -1280,8 +1280,7 @@ e.PrintPayslip();          // payroll never knows how a Manager's pay is calcula
       <div class="note fix"><span class="tag">Correction</span><p>Too strong. A derived class can add an overload of an inherited method: <code>Employee.Work()</code> plus <code>Manager.Work(int hours)</code>, and both are callable on a Manager. Safer answer: "Normally within one class, but a derived class can add new overloads of inherited methods."</p></div>
 
       <h3>Method hiding</h3>
-      <p>It is the process of hiding the child class implementation.</p>
-      <div class="note fix"><span class="tag">Correction</span><p>It's the other way round. The child declares a member with the same signature using <code>new</code>, which hides the <b>parent's</b> member. Which one runs is decided by the <b>reference type at compile time</b>.</p></div>
+      <p>It is the process of hiding the parent class method in the child class. The child class declares a method with the same name and same parameters using the <code>new</code> keyword. Which method runs is decided by the reference type at compile time.</p>
       <div class="add"><span class="tag">Example</span>
 <pre class="cs">public class Employee { public void Work() =&gt; Console.WriteLine("Employee works"); }
 public class Manager : Employee
