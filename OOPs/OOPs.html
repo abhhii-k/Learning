@@ -1497,15 +1497,47 @@ emp.Work();</pre>
 
       <h4>Realtime Example and Advantage</h4>
       <div class="add"><span class="tag">Example · notifications</span>
-<pre class="cs">public class Notifier             { public virtual void Send(string msg) =&gt; Console.WriteLine("Log: " + msg); }
-public class EmailNotifier : Notifier { public override void Send(string msg) { /* SMTP */ } }
-public class SmsNotifier   : Notifier { public override void Send(string msg) { /* SMS API */ } }
-
-void NotifyAll(List&lt;Notifier&gt; channels, string msg)
+        <p>Think of an app that sends the same message through Email and SMS.</p>
+        <p><b>Step 1: one parent, and each child sends in its own way.</b></p>
+<pre class="cs">public class Notifier
 {
-    foreach (var c in channels) c.Send(msg);   // one call, each channel sends its own way
+    public virtual void Send(string msg)
+    {
+        Console.WriteLine("Notifier: " + msg);
+    }
+}
+
+public class EmailNotifier : Notifier
+{
+    public override void Send(string msg)
+    {
+        Console.WriteLine("Email sent: " + msg);
+    }
+}
+
+public class SmsNotifier : Notifier
+{
+    public override void Send(string msg)
+    {
+        Console.WriteLine("SMS sent: " + msg);
+    }
 }</pre>
-        <p>Advantage: the caller is written once against the parent type. A new <code>WhatsAppNotifier</code> needs a new class only, with no change to <code>NotifyAll</code>.</p>
+        <p><b>Step 2: the code that uses them.</b> This method is the <b>caller</b>: the code that <i>calls</i> <code>Send()</code>. It only knows the parent type <code>Notifier</code>.</p>
+<pre class="cs">void NotifyAll(List&lt;Notifier&gt; channels, string msg)
+{
+    foreach (Notifier c in channels)
+    {
+        c.Send(msg);   // runs Email's or SMS's Send, based on the real object
+    }
+}
+
+var channels = new List&lt;Notifier&gt; { new EmailNotifier(), new SmsNotifier() };
+NotifyAll(channels, "Salary credited");</pre>
+        <p><b>Output</b></p>
+<pre>Email sent: Salary credited
+SMS sent: Salary credited</pre>
+        <p><b>Why:</b> the variable <code>c</code> is of type <code>Notifier</code>, but the real object is an EmailNotifier the first time and an SmsNotifier the second time. Because <code>Send</code> is <code>virtual</code>/<code>override</code>, C# runs the version of the real object.</p>
+        <p><b>Advantage:</b> <code>NotifyAll</code> is written only once. Tomorrow if you add WhatsApp, you just write a new class <code>WhatsAppNotifier : Notifier</code> and add it to the list. <code>NotifyAll</code> doesn't change at all, and it has no <code>if (email) … else if (sms) …</code> checks.</p>
       </div>
       <div class="qa"><div class="label">Interview</div>
         <details><summary>What happens if the child redefines a method without virtual/override or new?</summary><div class="a"><p>It still hides the parent method, but the compiler gives warning CS0108 asking you to write <code>new</code> if hiding was intended.</p></div></details>
