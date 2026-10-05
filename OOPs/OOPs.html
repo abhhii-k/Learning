@@ -139,6 +139,7 @@ pre.cs {
   margin: 14px 0 0; padding: 14px 16px; background: var(--code-bg); border: 1px solid var(--line);
   border-radius: 8px; overflow-x: auto; font: 13.5px/1.55 var(--font-mono); color: var(--fg); tab-size: 4;
 }
+pre.out { margin: 14px 0 0; padding: 14px 16px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; font: 13.5px/1.55 var(--font-mono); color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; }
 pre.cs .k { color: var(--kw); font-weight: 600; }
 pre.cs .t { color: var(--ty); }
 pre.cs .s { color: var(--str); }
@@ -1496,48 +1497,77 @@ emp.Work();</pre>
       </table></div>
 
       <h4>Realtime Example and Advantage</h4>
-      <div class="add"><span class="tag">Example · notifications</span>
-        <p>Think of an app that sends the same message through Email and SMS.</p>
-        <p><b>Step 1: one parent, and each child sends in its own way.</b></p>
+      <div class="add"><span class="tag">Example · notifications with real data</span>
+        <p>Think of a payroll app that tells employees their salary is credited, by Email or SMS.</p>
+        <p><b>Step 1: one parent, and each child sends in its own way.</b> Each notifier knows who to send to (<code>To</code>).</p>
 <pre class="cs">public class Notifier
 {
+    public string To { get; }
+    public Notifier(string to) { To = to; }
+
     public virtual void Send(string msg)
-    {
-        Console.WriteLine("Notifier: " + msg);
-    }
+        =&gt; Console.WriteLine($"[Log] {To}: {msg}");
 }
 
 public class EmailNotifier : Notifier
 {
+    public EmailNotifier(string email) : base(email) { }
+
     public override void Send(string msg)
-    {
-        Console.WriteLine("Email sent: " + msg);
-    }
+        =&gt; Console.WriteLine($"[Email] to {To}: {msg}");
 }
 
 public class SmsNotifier : Notifier
 {
+    public SmsNotifier(string phone) : base(phone) { }
+
     public override void Send(string msg)
-    {
-        Console.WriteLine("SMS sent: " + msg);
-    }
+        =&gt; Console.WriteLine($"[SMS] to {To}: {msg}");
 }</pre>
         <p><b>Step 2: the code that uses them.</b> This method is the <b>caller</b>: the code that <i>calls</i> <code>Send()</code>. It only knows the parent type <code>Notifier</code>.</p>
 <pre class="cs">void NotifyAll(List&lt;Notifier&gt; channels, string msg)
 {
     foreach (Notifier c in channels)
-    {
         c.Send(msg);   // runs Email's or SMS's Send, based on the real object
-    }
+}</pre>
+        <p><b>Step 3: real data.</b> Every child object added to a <code>List&lt;Notifier&gt;</code> is <b>implicitly upcast</b> (parent reference, child object). No cast is written.</p>
+<pre class="cs">var channels = new List&lt;Notifier&gt;
+{
+    new EmailNotifier("asha@company.com"),   // EmailNotifier → Notifier (implicit upcast)
+    new SmsNotifier("+91 98765 43210"),      // SmsNotifier → Notifier (implicit upcast)
+    new EmailNotifier("ravi@company.com"),
+    new Notifier("audit-log")                // already a Notifier, no cast
+};
+
+NotifyAll(channels, "Salary of Rs 85,000 credited for September");</pre>
+        <p><b>Output</b></p>
+<pre class="out">[Email] to asha@company.com: Salary of Rs 85,000 credited for September
+[SMS] to +91 98765 43210: Salary of Rs 85,000 credited for September
+[Email] to ravi@company.com: Salary of Rs 85,000 credited for September
+[Log] audit-log: Salary of Rs 85,000 credited for September</pre>
+        <p><b>Dry run of the loop</b></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Round</th><th>Type of <code>c</code> (reference)</th><th>Real object on heap</th><th><code>Send</code> that runs</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Notifier</td><td>EmailNotifier</td><td>EmailNotifier.Send</td></tr>
+            <tr><td>2</td><td>Notifier</td><td>SmsNotifier</td><td>SmsNotifier.Send</td></tr>
+            <tr><td>3</td><td>Notifier</td><td>EmailNotifier</td><td>EmailNotifier.Send</td></tr>
+            <tr><td>4</td><td>Notifier</td><td>Notifier</td><td>Notifier.Send (no override)</td></tr>
+          </tbody>
+        </table></div>
+        <p><b>Why:</b> the reference type of <code>c</code> is always <code>Notifier</code>, but the real object decides which <code>Send</code> runs, because <code>Send</code> is <code>virtual</code>/<code>override</code>. That is run-time polymorphism.</p>
+        <p><b>Step 4: adding WhatsApp later.</b></p>
+<pre class="cs">public class WhatsAppNotifier : Notifier
+{
+    public WhatsAppNotifier(string phone) : base(phone) { }
+
+    public override void Send(string msg)
+        =&gt; Console.WriteLine($"[WhatsApp] to {To}: {msg}");
 }
 
-var channels = new List&lt;Notifier&gt; { new EmailNotifier(), new SmsNotifier() };
-NotifyAll(channels, "Salary credited");</pre>
-        <p><b>Output</b></p>
-<pre>Email sent: Salary credited
-SMS sent: Salary credited</pre>
-        <p><b>Why:</b> the variable <code>c</code> is of type <code>Notifier</code>, but the real object is an EmailNotifier the first time and an SmsNotifier the second time. Because <code>Send</code> is <code>virtual</code>/<code>override</code>, C# runs the version of the real object.</p>
-        <p><b>Advantage:</b> <code>NotifyAll</code> is written only once. Tomorrow if you add WhatsApp, you just write a new class <code>WhatsAppNotifier : Notifier</code> and add it to the list. <code>NotifyAll</code> doesn't change at all, and it has no <code>if (email) … else if (sms) …</code> checks.</p>
+channels.Add(new WhatsAppNotifier("+91 91234 56789"));   // implicit upcast again</pre>
+        <p>New output line: <code>[WhatsApp] to +91 91234 56789: Salary of Rs 85,000 credited for September</code></p>
+        <p><b>Advantage:</b> <code>NotifyAll</code> is written only once. To add WhatsApp, you write one new class and add it to the list. <code>NotifyAll</code> doesn't change at all, and it has no <code>if (email) … else if (sms) …</code> checks.</p>
       </div>
       <div class="qa"><div class="label">Interview</div>
         <details><summary>What happens if the child redefines a method without virtual/override or new?</summary><div class="a"><p>It still hides the parent method, but the compiler gives warning CS0108 asking you to write <code>new</code> if hiding was intended.</p></div></details>
