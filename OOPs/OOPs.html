@@ -1299,7 +1299,7 @@ emp.Work();              // Employee works
 
       <h3>Runtime Polymorphism</h3>
       <p>Runtime polymorphism is method overriding. It allows the child class to provide its own implementation that is already defined in the base class.</p>
-      <p>We can achieve this using the base method marked as "<b>virtual</b>" and the child method marked as "<b>override</b>".</p>
+      <p>We can achieve this using the base method marked as "<b>virtual</b>" and the child method marked as "<b>override</b>", and calling the method through a <b>parent class reference pointing to a child class object</b> (<code>Employee e = new Manager();</code>).</p>
       <p>At the runtime CLR decides which method should executes based on the object.</p>
 
       <h3>Method Overriding (Virtual, override)</h3>
