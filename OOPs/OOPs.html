@@ -1712,8 +1712,8 @@ Console.WriteLine(emp is Developer);  // False</pre>
     mgr.ApproveLeave();
 }</pre>
       </div>
-      <p>Now your application won't crash. If the object type is the same as the reference type then only it will allow.</p>
-      <div class="note fix"><span class="tag">Correction</span><p><code>is</code> doesn't need the exact same type. It allows the cast when the object is that type <b>or derived from it</b> (or implements the interface). If <code>SeniorManager : Manager</code>, then <code>emp is Manager</code> is true for a SeniorManager.</p></div>
+      <p>Now your application won't crash. It will allow the cast only if the actual object is of that type <b>or derived from it</b> (or implements that interface). Otherwise <code>is</code> returns false and the cast is skipped.</p>
+      <div class="add"><span class="tag">Example</span><p>If <code>SeniorManager : Manager</code>, then for <code>Employee emp = new SeniorManager();</code> the check <code>emp is Manager</code> is <b>true</b>, because a SeniorManager is also a Manager.</p></div>
       <h4>Better Syntax (C# 7+)</h4>
       <div class="add"><span class="tag">Example</span>
 <pre class="cs">if (emp is Manager mgr)
