@@ -2271,6 +2271,55 @@ var cfg = AppConfig.Instance;        // always the same object
       </ol>
       <p>Easy way to remember: <b>initializers run child → parent, constructor bodies run parent → child.</b> Static constructors run only the first time.</p>
 
+      <div class="add"><span class="tag">Combined quiz · this() + base() + override + new</span>
+<pre class="cs">public class Employee
+{
+    public string Name;
+    public Employee(string name) { Name = name; Console.WriteLine("Employee ctor"); }
+    public virtual void Work() =&gt; Console.WriteLine($"{Name} is working");
+    public void Login() =&gt; Console.WriteLine("Employee login");
+}
+
+public class Manager : Employee
+{
+    public int TeamSize;
+    public Manager(string name) : this(name, 5) { Console.WriteLine("Manager(name) ctor"); }
+    public Manager(string name, int teamSize) : base(name)
+    {
+        TeamSize = teamSize;
+        Console.WriteLine("Manager(name, teamSize) ctor");
+    }
+    public override void Work()
+    {
+        base.Work();
+        Console.WriteLine($"{Name} manages {TeamSize} people");
+    }
+    public new void Login() =&gt; Console.WriteLine("Manager login");
+}
+
+Employee e = new Manager("Asha");
+e.Work();
+e.Login();
+((Manager)e).Login();</pre>
+        <p><b>Output</b></p>
+<pre class="out">Employee ctor
+Manager(name, teamSize) ctor
+Manager(name) ctor
+Asha is working
+Asha manages 5 people
+Employee login
+Manager login</pre>
+        <p><b>Constructors: calls go down, bodies run on the way back up.</b></p>
+<pre class="out">new Manager("Asha")
+ → Manager(name) called, first jumps to this(name, 5)
+    → Manager(name, teamSize) called, first jumps to base(name)
+       → Employee(name) body runs          "Employee ctor"
+    ← Manager(name, teamSize) body runs    "Manager(name, teamSize) ctor"
+ ← Manager(name) body runs                 "Manager(name) ctor"</pre>
+        <p><b>Methods:</b> <code>Work</code> is overridden, so the <b>object</b> (Manager) decides, and <code>base.Work()</code> adds the parent's line first. <code>Login</code> is hidden with <code>new</code>, so the <b>reference type</b> decides: through <code>e</code> (Employee) you get "Employee login", through the cast to Manager you get "Manager login".</p>
+        <p><b>Variations:</b> delete <code>base.Work()</code> and only "Asha is working" disappears. Change <code>override</code> to <code>new</code> on Work and <code>e.Work()</code> prints only "Asha is working".</p>
+      </div>
+
       <h3>Destructor (Finalizer)</h3>
 <pre class="cs">public class Employee
 {
