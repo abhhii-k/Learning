@@ -869,7 +869,66 @@ Instance Constructor</pre>
 
       <h3>Static Class</h3>
       <p>A static class is a class that cannot be instantiated and can contain only static members. It is commonly used for utility or helper functionality, such as the built-in Math class.</p>
+      <div class="add"><span class="tag">Example · PayrollHelper</span>
+<pre class="cs">public static class PayrollHelper
+{
+    public const decimal TaxRate = 0.10m;
+
+    public static decimal CalculateTax(decimal salary)
+        =&gt; salary * TaxRate;
+
+    public static decimal NetSalary(decimal salary)
+        =&gt; salary - CalculateTax(salary);
+}
+
+Console.WriteLine(PayrollHelper.CalculateTax(50000)); // 5000.00
+Console.WriteLine(PayrollHelper.NetSalary(50000));    // 45000.00</pre>
+        <p>No object is ever created. You call everything through the class name.</p>
+      </div>
+      <div class="add"><span class="tag">What the compiler stops</span>
+<pre class="cs">var h = new PayrollHelper();          // CS0712: cannot create an instance of a static class
+public void Reset() { }               // CS0708: cannot declare instance members in a static class
+public PayrollHelper() { }            // CS0710: static classes cannot have instance constructors
+class MyHelper : PayrollHelper { }    // CS0709: cannot derive from a static class</pre>
+        <p>Behind the scenes the compiler marks a static class as <b>abstract + sealed</b> in IL: abstract means no objects, sealed means no children.</p>
+      </div>
+      <div class="note key"><span class="tag">Rules</span><ul>
+        <li>Only static members (fields, methods, properties, events, <code>const</code>).</li>
+        <li>A <b>static</b> constructor is allowed. An <b>instance</b> constructor (the normal <code>public PayrollHelper() { }</code> that runs on every <code>new</code>) is not, because no object can ever be created.</li>
+        <li>Cannot be instantiated, inherited, or used as a base class. Cannot implement interfaces.</li>
+      </ul></div>
+      <div class="add"><span class="tag">Real world · extension methods</span>
+<pre class="cs">public static class SalaryExtensions
+{
+    public static string ToRupees(this decimal amount) =&gt; $"Rs {amount:N0}";
+}
+
+decimal salary = 85000;
+Console.WriteLine(salary.ToRupees());   // Rs 85,000</pre>
+        <p>Extension methods must live in a static class. LINQ's <code>Where</code> and <code>Select</code> are extension methods in the static class <code>Enumerable</code>.</p>
+      </div>
+      <div class="add"><span class="tag">Quiz · static class</span>
+<pre class="cs">public static class PayrollHelper
+{
+    public static int Count;
+    static PayrollHelper() { Console.WriteLine("Helper ready"); Count = 10; }
+    public static void Add() { Count++; }
+}
+
+Console.WriteLine("Start");
+PayrollHelper.Add();
+PayrollHelper.Add();
+Console.WriteLine(PayrollHelper.Count);</pre>
+        <p><b>Output</b></p>
+<pre class="out">Start
+Helper ready
+12</pre>
+        <p><b>Why "Start" first:</b> the static constructor does not run when the program starts. It runs just before the <b>first use</b> of PayrollHelper, which is the first <code>Add()</code>.</p>
+      </div>
       <div class="qa"><div class="label">Interview</div>
+        <details><summary>When do you use a static class?</summary><div class="a"><p>When the functionality doesn't depend on object state: helpers, utilities, constants, extension methods. Examples: Math, Convert, Enumerable.</p></div></details>
+        <details><summary>Static class vs Singleton?</summary><div class="a"><p>A static class has no object, can't implement interfaces and can't be injected or mocked. A Singleton is one real object, so it can implement an interface and be registered in DI. For services that need testing, prefer a Singleton through DI.</p></div></details>
+        <details><summary>Why can't a static class have an instance constructor?</summary><div class="a"><p>An instance constructor runs only when <code>new</code> creates an object. A static class can never be instantiated, so it would never run. Only a static constructor is allowed, to initialize static data.</p></div></details>
         <details><summary>Why is <code>Main()</code> static?</summary><div class="a"><p>So the CLR can call the entry point without first creating an object of the class.</p></div></details>
         <details><summary>Can we overload static methods?</summary><div class="a"><p>Yes. Overloading only needs a different parameter list. Static methods cannot be <i>overridden</i>, though.</p></div></details>
       </div>
