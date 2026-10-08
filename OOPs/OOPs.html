@@ -2494,6 +2494,186 @@ public class Manager : Employee, IReviewable           // one class + many inter
       </div>
       <p style="margin-top:14px">In real ASP.NET Core projects you use <b>interfaces</b> far more often, because DI and unit testing are built around them. A common pattern combines both: an interface for the contract, and an abstract base class implementing it to share code.</p>
 
+      <h3>How to choose: the 3-question rule</h3>
+      <div class="note key"><span class="tag">Ask in this order</span><ul>
+        <li>Do the classes share <b>code or data</b>? Use an <b>abstract class</b>.</li>
+        <li>Is it a <b>capability</b> that unrelated classes might have? Use an <b>interface</b>.</li>
+        <li>Will it be <b>injected through DI or mocked</b> in tests? Use an <b>interface</b>.</li>
+      </ul><p>Often the answer is both: an abstract base for shared code plus interfaces for capabilities, like <code>Manager : Employee, IReviewable</code>. An abstract member is implemented with <code>override</code>; an interface member with a plain <code>public</code> method.</p></div>
+      <div class="note key"><span class="tag">Abstract rules &amp; errors</span>
+<pre class="cs">public abstract class Employee
+{
+    public abstract decimal CalculatePay() { return 0; }   // ✗ CS0500: abstract method can't have a body
+}
+
+public class Intern
+{
+    public abstract void Train();                          // ✗ CS0513: abstract member in a non-abstract class
+}
+
+public class Trainee : Employee { }                        // ✗ CS0534: CalculatePay() not overridden</pre>
+        <p>Also: <code>new Employee(...)</code> on an abstract class gives <b>CS0144</b>, the same error as for an interface.</p></div>
+
+      <h3>Enterprise example 1 · HRMS Web API on EF Core</h3>
+      <div class="add"><span class="tag">Example · entities + repositories</span>
+<pre class="cs">public abstract class BaseEntity                 // IS-A: every table shares these columns
+{
+    public int Id { get; set; }
+    public DateTime CreatedOn { get; set; }
+}
+
+public interface ISoftDeletable                  // CAN-DO: only some tables can be soft deleted
+{
+    bool IsDeleted { get; set; }                 // a property (not a field) is allowed
+}
+
+public class Employee : BaseEntity, ISoftDeletable { public string Name { get; set; } = ""; public bool IsDeleted { get; set; } }
+public class AuditLog : BaseEntity { public string Action { get; set; } = ""; }   // never deleted
+
+// AppDbContext: shared code written once, works for every entity
+public override Task&lt;int&gt; SaveChangesAsync(CancellationToken ct = default)
+{
+    foreach (var entry in ChangeTracker.Entries&lt;BaseEntity&gt;())
+    {
+        if (entry.State == EntityState.Added) entry.Entity.CreatedOn = DateTime.UtcNow;
+        if (entry.State == EntityState.Deleted &amp;&amp; entry.Entity is ISoftDeletable sd)
+        {
+            entry.State = EntityState.Modified;     // UPDATE instead of DELETE
+            sd.IsDeleted = true;
+        }
+    }
+    return base.SaveChangesAsync(ct);
+}
+
+public interface IEmployeeRepository { Task&lt;Employee?&gt; GetByIdAsync(int id); }   // DI + mocking
+
+public abstract class BaseRepository&lt;T&gt; where T : BaseEntity                      // shared CRUD
+{
+    protected readonly AppDbContext _db;
+    protected BaseRepository(AppDbContext db) =&gt; _db = db;
+    public async Task&lt;T?&gt; GetByIdAsync(int id) =&gt; await _db.Set&lt;T&gt;().FindAsync(id);
+}
+
+public class EmployeeRepository : BaseRepository&lt;Employee&gt;, IEmployeeRepository
+{
+    public EmployeeRepository(AppDbContext db) : base(db) { }
+}
+
+builder.Services.AddScoped&lt;IEmployeeRepository, EmployeeRepository&gt;();   // Program.cs
+var repo = new Mock&lt;IEmployeeRepository&gt;();                              // unit test</pre>
+        <div class="tbl"><table>
+          <thead><tr><th>Piece</th><th>Type</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><code>BaseEntity</code></td><td>Abstract class</td><td>Shared columns (state), IS-A</td></tr>
+            <tr><td><code>ISoftDeletable</code></td><td>Interface</td><td>A capability only some entities have</td></tr>
+            <tr><td><code>BaseRepository&lt;T&gt;</code></td><td>Abstract class</td><td>Shared CRUD code, has a constructor and <code>_db</code></td></tr>
+            <tr><td><code>IEmployeeRepository</code></td><td>Interface</td><td>DI registration and Moq mocking</td></tr>
+          </tbody>
+        </table></div>
+        <p>The framework does the same: <code>BackgroundService</code> is an abstract class implementing the interface <code>IHostedService</code>. Microsoft wrote the start/stop plumbing once, and you only <code>override ExecuteAsync</code>.</p>
+      </div>
+
+      <h3>Enterprise example 2 · bulk employee import</h3>
+      <div class="add"><span class="tag">Example · Excel / CSV / SAP importers</span>
+<pre class="cs">public interface IDataImporter    { string Source { get; } Task&lt;ImportResult&gt; ImportAsync(Stream? file); }
+public interface IScheduledImport { string CronExpression { get; } }      // only some sources
+
+public abstract class ImporterBase : IDataImporter       // template method: same flow for all
+{
+    private readonly IEmployeeRepository _repo;
+    protected ImporterBase(IEmployeeRepository repo) =&gt; _repo = repo;
+
+    public abstract string Source { get; }
+    protected abstract Task&lt;List&lt;EmployeeRow&gt;&gt; ReadRowsAsync(Stream? file);   // the only blank
+
+    public async Task&lt;ImportResult&gt; ImportAsync(Stream? file)
+    {
+        var rows  = await ReadRowsAsync(file);                                  // 1. read (differs)
+        var valid = rows.Where(r =&gt; !string.IsNullOrWhiteSpace(r.Email)).ToList();   // 2. validate
+        foreach (var r in valid) await _repo.AddAsync(r.ToEmployee());          // 3. save
+        return new ImportResult(valid.Count, rows.Count - valid.Count);         // 4. report
+    }
+}
+
+public class ExcelImporter : ImporterBase { /* reads with ClosedXML */ }
+public class SapImporter : ImporterBase, IScheduledImport                       // base class first
+{
+    public string CronExpression =&gt; "0 2 * * *";                               // nightly at 2 AM
+    /* reads from the SAP API */
+}
+
+// Controller: POST /api/import/{source}
+var importer = importers.FirstOrDefault(i =&gt; i.Source == source);   // IEnumerable&lt;IDataImporter&gt; from DI
+await importer.ImportAsync(file.OpenReadStream());                  // run-time polymorphism
+
+foreach (var job in importers.OfType&lt;IScheduledImport&gt;()) { /* register nightly job */ }</pre>
+        <p><b>Abstract</b> <code>ImporterBase</code> holds the shared read → validate → save flow, so a fix lands in every importer. <b>Interface</b> <code>IDataImporter</code> is what the controller and DI know, and what tests mock. <b>Interface</b> <code>IScheduledImport</code> marks only the sources that run nightly. A new source (Workday) is one new class, with no change to the controller.</p>
+      </div>
+
+      <div class="add"><span class="tag">Quiz · abstract + interface</span>
+<pre class="cs">public abstract class Employee
+{
+    public string Name;
+    protected Employee(string name) { Name = name; Console.WriteLine("Employee ctor"); }
+    public abstract decimal CalculatePay();
+    public void PrintPay() =&gt; Console.WriteLine($"{Name}: {CalculatePay()}");
+}
+
+public interface IBonusEligible { decimal Bonus(); }
+
+public class Developer : Employee, IBonusEligible
+{
+    public Developer(string name) : base(name) { Console.WriteLine("Developer ctor"); }
+    public override decimal CalculatePay() =&gt; 70000;
+    public decimal Bonus() =&gt; 5000;
+}
+
+public class Trainee : Employee
+{
+    public Trainee(string name) : base(name) { }
+    // CalculatePay() is not written                  // Line A
+}
+
+Employee e = new Employee("Asha");                     // Line B
+
+Employee d = new Developer("Ravi");
+d.PrintPay();
+IBonusEligible b = (IBonusEligible)d;
+Console.WriteLine(b.Bonus());</pre>
+        <p><b>Line A:</b> CS0534, Trainee is not abstract, so it must override the abstract <code>CalculatePay()</code>. <b>Line B:</b> CS0144, an abstract class can't be instantiated (its constructor runs only through <code>base(...)</code>). <b>Output</b> (after removing A and B):</p>
+<pre class="out">Employee ctor
+Developer ctor
+Ravi: 70000
+5000</pre>
+        <p><code>PrintPay()</code> is written in the abstract class, but calls the Developer's <code>CalculatePay()</code> at run time. The cast to <code>IBonusEligible</code> works because the object is really a Developer.</p>
+        <p><b>Design question:</b> Card, UPI and Wallet share <code>LogTransaction()</code>, each has its own <code>Pay()</code>, and only Card and UPI support <code>Refund()</code>.</p>
+<pre class="cs">public abstract class Payment
+{
+    protected void LogTransaction(decimal amount) =&gt; Console.WriteLine($"Logged {amount}");   // shared
+    public abstract void Pay(decimal amount);                                                // each its own
+}
+
+public interface IRefundable { void Refund(decimal amount); }   // capability
+
+public class CardPayment : Payment, IRefundable
+{
+    public override void Pay(decimal amount) { LogTransaction(amount); /* card gateway */ }
+    public void Refund(decimal amount) { /* card refund */ }
+}
+
+public class UpiPayment : Payment, IRefundable
+{
+    public override void Pay(decimal amount) { LogTransaction(amount); /* UPI */ }
+    public void Refund(decimal amount) { /* UPI refund */ }
+}
+
+public class WalletPayment : Payment             // no refund capability
+{
+    public override void Pay(decimal amount) { LogTransaction(amount); /* wallet */ }
+}</pre>
+        <p>Shared code goes in the <b>abstract class</b>. The capability that only some have goes in an <b>interface</b>, so <code>WalletPayment</code> never has a fake <code>Refund()</code> that throws.</p>
+      </div>
+
       <h3>Interfaces in depth: one contract, unrelated classes</h3>
       <div class="add"><span class="tag">Example · payroll through IPayable</span>
 <pre class="cs">public interface IPayable    { decimal CalculatePay(); }
@@ -2586,6 +2766,7 @@ public class TeamLead : IHrReport, IFinanceReport
         <details><summary>Why use an interface instead of an abstract class?</summary><div class="a"><p>A class can implement many interfaces but inherit one class; interfaces keep coupling loose, so they are what we inject with DI and mock in unit tests; and unrelated types (even structs) can share them. Use an abstract class when related classes need shared code or state.</p></div></details>
         <details><summary>Can an abstract class have a constructor? Why, if you can't create it?</summary><div class="a"><p>Yes. It runs when a derived object is created (through <code>base(...)</code>) to initialise the shared fields. Make it <code>protected</code>.</p></div></details>
         <details><summary>Can an abstract class implement an interface without implementing its methods?</summary><div class="a"><p>Yes. It can declare them <code>abstract</code> and leave them to the derived class.</p></div></details>
+        <details><summary>Give a real project example of using both.</summary><div class="a"><p>In our Web API, entities inherit an abstract BaseEntity for shared audit columns and opt in to capabilities like ISoftDeletable through interfaces. Repositories inherit an abstract BaseRepository for shared CRUD code, but services depend on IEmployeeRepository, so we register it in DI and mock it in unit tests.</p></div></details>
         <details><summary>After default interface methods, is there any difference left?</summary><div class="a"><p>Yes: interfaces still have no instance fields, no constructors, and no protected state, and a class can still inherit only one class. The IS-A vs CAN-DO design difference stays the same.</p></div></details>
       </div>
     </section>
