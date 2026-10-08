@@ -1953,8 +1953,7 @@ class Report { void Run() =&gt; Console.WriteLine(new Employee().Bonus); }    //
       </table></div>
 
       <h3>private protected</h3>
-      <p>Then private protected is <b>protected AND private</b>. The member is accessible <b>only if BOTH conditions are true</b>.</p>
-      <div class="note fix"><span class="tag">Correction</span><p>It is <b>protected AND internal</b> (not "and private"). Your two conditions below are exactly right: same assembly <i>and</i> derived class.</p></div>
+      <p>Then private protected is <b>protected AND internal</b>. The member is accessible <b>only if BOTH conditions are true</b>.</p>
       <p>It can only be accessed:</p>
       <ul><li>✅ In the <b>same assembly</b></li><li>✅ By a <b>derived class</b></li></ul>
       <p>Both must be true.</p>
