@@ -140,6 +140,9 @@ pre.cs {
   border-radius: 8px; overflow-x: auto; font: 13.5px/1.55 var(--font-mono); color: var(--fg); tab-size: 4;
 }
 pre.out { margin: 14px 0 0; padding: 14px 16px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; font: 13.5px/1.55 var(--font-mono); color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; }
+.logic { display: inline-block; font: 700 12px/1 var(--font-mono); letter-spacing: .06em; padding: 4px 8px; border-radius: 999px; margin-left: 4px; vertical-align: 1px; }
+.logic.and { color: var(--ovr); background: var(--ovr-soft); border: 1px solid var(--ovr); }
+.logic.or { color: var(--ok); background: var(--ok-soft); border: 1px solid var(--ok); }
 pre.cs .k { color: var(--kw); font-weight: 600; }
 pre.cs .t { color: var(--ty); }
 pre.cs .s { color: var(--str); }
@@ -1911,7 +1914,7 @@ emp.CalculateSalary();     // ✗ compile error</pre>
       <p>This simply means <b>protected OR internal.</b></p>
       <p>A member marked protected internal can be accessed:</p>
       <ul>
-        <li>✅ From any class in the <b>same assembly</b> (internal). <b>OR</b></li>
+        <li>✅ From any class in the <b>same assembly</b> (internal). <span class="logic or">OR</span></li>
         <li>✅ From a <b>derived class</b>, even if it's in a different assembly (protected).</li>
       </ul>
       <div class="add"><span class="tag">Example · setup</span>
@@ -1955,7 +1958,7 @@ class Report { void Run() =&gt; Console.WriteLine(new Employee().Bonus); }    //
       <h3>private protected</h3>
       <p>Then private protected is <b>protected AND internal</b>. The member is accessible <b>only if BOTH conditions are true</b>.</p>
       <p>It can only be accessed:</p>
-      <ul><li>✅ In the <b>same assembly</b> <b>and</b></li><li>✅ By a <b>derived class</b></li></ul>
+      <ul><li>✅ In the <b>same assembly</b>. <span class="logic and">AND</span></li><li>✅ By a <b>derived class</b>.</li></ul>
       <p>Both must be true.</p>
       <h4>Example</h4>
       <div class="add"><span class="tag">Example · setup</span>
