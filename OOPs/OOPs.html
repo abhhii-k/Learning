@@ -2353,7 +2353,43 @@ class SeniorManager : Manager
         <li><b>Security</b>: stop someone changing the behaviour of sensitive logic (validation, pricing).</li>
         <li><b>Performance</b>: the JIT can call methods directly instead of through the vtable (devirtualization).</li>
       </ul>
+      <div class="note key"><span class="tag">Rules &amp; errors</span><ul>
+        <li>Inheriting a sealed class: <b>CS0509</b>.</li>
+        <li>Overriding a sealed method: <b>CS0239</b>.</li>
+        <li><code>sealed</code> on a method without <code>override</code>: <b>CS0238</b>. Only an <b>overriding</b> method can be sealed.</li>
+        <li>A class that is both <code>abstract</code> and <code>sealed</code>: <b>CS0418</b>.</li>
+        <li>A child can still <b>hide</b> a sealed method with <code>new</code>. That is hiding, not overriding.</li>
+      </ul></div>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th><code>new</code> object?</th><th>Can inherit from it?</th><th>Typical use</th></tr></thead>
+        <tbody>
+          <tr><td><b>static</b></td><td>No</td><td>No</td><td>Helpers / utilities</td></tr>
+          <tr><td><b>sealed</b></td><td>Yes</td><td>No</td><td>Final, complete classes</td></tr>
+          <tr><td><b>abstract</b></td><td>No</td><td>Yes (must)</td><td>Base classes / templates</td></tr>
+        </tbody>
+      </table></div>
+      <div class="add"><span class="tag">Quiz · sealed + new</span>
+<pre class="cs">public class Employee      { public virtual void Work() =&gt; Console.WriteLine("Employee working"); }
+public class Manager : Employee
+{
+    public sealed override void Work() =&gt; Console.WriteLine("Managing team");
+}
+public class SeniorManager : Manager
+{
+    public new void Work() =&gt; Console.WriteLine("Leading managers");   // hides, does not override
+}
+
+Employee e = new SeniorManager();
+e.Work();
+SeniorManager s = new SeniorManager();
+s.Work();</pre>
+        <p><b>Output</b></p>
+<pre class="out">Managing team
+Leading managers</pre>
+        <p><b>Why:</b> <code>e</code> is an Employee reference, so the call goes through the virtual chain. The last override in that chain is Manager's sealed <code>Work()</code>. SeniorManager's <code>new Work()</code> is not part of the chain, so it is skipped. <code>s</code> is a SeniorManager reference, so the compiler picks the hiding method directly.</p>
+      </div>
       <div class="qa"><div class="label">Interview</div>
+        <details><summary>Static class vs sealed class?</summary><div class="a"><p>Both prevent inheritance. A sealed class can be instantiated and can have instance members. A static class can't be instantiated and has only static members.</p></div></details>
         <details><summary>Can we create an object of a sealed class?</summary><div class="a"><p>Yes. Sealed only blocks inheritance, not instantiation. (A <code>static</code> class blocks both.)</p></div></details>
         <details><summary>Can we seal a method that is not an override?</summary><div class="a"><p>No. <code>sealed</code> on a method is only allowed together with <code>override</code>. A non-virtual method can't be overridden anyway.</p></div></details>
         <details><summary>Can a class be both abstract and sealed?</summary><div class="a"><p>No, they contradict each other: abstract must be inherited, sealed can't be. Internally, a <code>static</code> class is compiled as abstract + sealed, but you can't write that yourself.</p></div></details>
