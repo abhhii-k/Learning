@@ -846,6 +846,26 @@ new Employee();   // Instance ctor ran   (static ctor does NOT run again)</pre>
       </ul>
       <p>Whichever happens first.</p>
       <div class="note key"><span class="tag">Also remember</span><p>A static constructor takes <b>no parameters</b>, can't be overloaded, and can't be called by your code.</p></div>
+      <div class="add"><span class="tag">Quiz · static constructor</span>
+<pre class="cs">public class Employee
+{
+    public static string Company = "Infosys";
+
+    static Employee()  { Console.WriteLine("Static Constructor"); }
+    public Employee()  { Console.WriteLine("Instance Constructor"); }
+}
+
+Console.WriteLine(Employee.Company);
+Employee emp1 = new Employee();
+Employee emp2 = new Employee();</pre>
+        <p><b>Output</b></p>
+<pre class="out">Static Constructor
+Infosys
+Instance Constructor
+Instance Constructor</pre>
+        <p><b>Order inside the class:</b> static field initializers run first (<code>Company = "Infosys"</code>), then the static constructor body. Both happen once, just before <code>Employee.Company</code> is read for the first time.</p>
+        <p><b>Why not again for emp1 and emp2?</b> The static constructor initializes the <b>type</b>, not an object. Static data exists once per type, so the CLR runs it once. After that, every <code>new Employee()</code> runs only the instance constructor.</p>
+      </div>
 
       <h3>Static Class</h3>
       <p>A static class is a class that cannot be instantiated and can contain only static members. It is commonly used for utility or helper functionality, such as the built-in Math class.</p>
