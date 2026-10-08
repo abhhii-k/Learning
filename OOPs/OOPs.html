@@ -2494,6 +2494,43 @@ public class Manager : Employee, IReviewable           // one class + many inter
       </div>
       <p style="margin-top:14px">In real ASP.NET Core projects you use <b>interfaces</b> far more often, because DI and unit testing are built around them. A common pattern combines both: an interface for the contract, and an abstract base class implementing it to share code.</p>
 
+      <h3>Interfaces in depth: one contract, unrelated classes</h3>
+      <div class="add"><span class="tag">Example · payroll through IPayable</span>
+<pre class="cs">public interface IPayable    { decimal CalculatePay(); }
+public interface IReviewable { void Review(); }
+
+public class Manager : Employee, IPayable, IReviewable   // one base class FIRST, then interfaces
+{
+    public Manager(string name) : base(name) { }
+    public decimal CalculatePay() =&gt; 90000;
+    public void Review() =&gt; Console.WriteLine($"{Name} reviews the team");
+}
+
+public class Developer : Employee, IPayable
+{
+    public Developer(string name) : base(name) { }
+    public decimal CalculatePay() =&gt; 70000;
+}
+
+public class Contractor : IPayable          // NOT an Employee, still payable
+{
+    public decimal CalculatePay() =&gt; 30000;
+}
+
+var payroll = new List&lt;IPayable&gt; { new Manager("Asha"), new Developer("Ravi"), new Contractor() };
+decimal total = 0;
+foreach (IPayable p in payroll) total += p.CalculatePay();
+Console.WriteLine($"Total payroll: {total}");   // Total payroll: 190000</pre>
+        <p>The list only cares about the <b>capability</b> (can it be paid?), not the class family. Each object is upcast implicitly to <code>IPayable</code>, and each runs its own <code>CalculatePay()</code>.</p>
+      </div>
+      <div class="note key"><span class="tag">Rules &amp; errors</span><ul>
+        <li>Can't be instantiated: <code>new IPayable()</code> gives <b>CS0144</b>.</li>
+        <li>A class must implement <b>every</b> member it promised, otherwise <b>CS0535</b>.</li>
+        <li>No instance fields in an interface: <b>CS0525</b>.</li>
+        <li>Base class must come first: <code>class Intern : IPayable, Employee</code> gives <b>CS1722</b>.</li>
+        <li>Implicitly implemented members must be <code>public</code>.</li>
+      </ul></div>
+
       <h3>Multiple interface inheritance</h3>
 <pre class="cs">public interface IWorker   { void Work(); }
 public interface ILeader   { void Lead(); }
@@ -2519,6 +2556,23 @@ var n = new Notifier();
 // n.Send();                       // ✗ not visible on the class
 ((IEmailNotifier)n).Send();        // Email
 ((ISmsNotifier)n).Send();          // SMS</pre>
+      <div class="add"><span class="tag">Quiz · explicit implementation</span>
+<pre class="cs">var lead = new TeamLead();
+((IHrReport)lead).Report();      // Call 1
+IFinanceReport f = lead;
+f.Report();                      // Call 2
+lead.Report();                   // Call 3
+
+public interface IHrReport      { void Report(); }
+public interface IFinanceReport { void Report(); }
+
+public class TeamLead : IHrReport, IFinanceReport
+{
+    void IHrReport.Report()      =&gt; Console.WriteLine("HR report");
+    void IFinanceReport.Report() =&gt; Console.WriteLine("Finance report");
+}</pre>
+        <p><b>Answer:</b> Call 1 prints "HR report", Call 2 prints "Finance report". Call 3 <b>does not compile</b>: CS1061, TeamLead has no <code>Report</code> of its own. It is not an ambiguity error and not a runtime exception. Explicit members are visible <b>only through the interface reference</b>.</p>
+      </div>
 
       <h3>Modern C# (8+): default interface methods</h3>
 <pre class="cs">public interface ILogger
