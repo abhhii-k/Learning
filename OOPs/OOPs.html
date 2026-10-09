@@ -2851,6 +2851,62 @@ a.ToString();         // EmployeeDto { Id = 101, Name = Asha }
 var c = a with { Name = "Ravi" };   // non-destructive copy</pre>
       <p>Records generate <code>Equals</code>, <code>GetHashCode</code>, <code>==</code> and <code>ToString</code>. They are ideal for DTOs and value objects.</p>
 
+      <h3>Enterprise use</h3>
+      <div class="add"><span class="tag">Example · de-duplicating a bulk import</span>
+<pre class="cs">var rows = await importer.ReadRowsAsync(file);        // Excel has employee 101 twice
+var unique = new HashSet&lt;Employee&gt;(rows);            // or rows.Distinct()
+// Without Equals + GetHashCode: every row looks unique, duplicates get saved
+// With both overridden (by Id): the second 101 is skipped
+
+_logger.LogInformation("Processing {Employee}", emp);   // calls ToString(): "#101 Asha"
+Assert.Equal(expected, actual);                          // unit tests use Equals</pre>
+        <p>Records are the usual choice for DTOs. Be careful overriding Equals on EF Core entities: the change tracker relies on identity.</p>
+      </div>
+
+      <div class="add"><span class="tag">Quiz · Equals without GetHashCode</span>
+<pre class="cs">public class Employee
+{
+    public int Id;
+    public string Name;
+    public Employee(int id, string name) { Id = id; Name = name; }
+
+    public override string ToString() =&gt; $"#{Id} {Name}";
+    public override bool Equals(object? obj) =&gt; obj is Employee other &amp;&amp; Id == other.Id;
+    // GetHashCode() is NOT overridden                         // Line X
+}
+
+var a = new Employee(101, "Asha");
+var b = new Employee(101, "Asha K");
+var c = a;
+
+Console.WriteLine(a);                        // 1
+Console.WriteLine(a == b);                   // 2
+Console.WriteLine(a.Equals(b));              // 3
+Console.WriteLine(ReferenceEquals(a, c));    // 4
+
+var set = new HashSet&lt;Employee&gt; { a, b };
+Console.WriteLine(set.Count);                // 5
+
+string s1 = "hello";
+string s2 = new string("hello".ToCharArray());
+Console.WriteLine(s1 == s2);                 // 6</pre>
+        <p><b>Output:</b></p>
+<pre class="out">#101 Asha
+False
+True
+True
+2
+True</pre>
+        <ul>
+          <li><b>2:</b> <code>==</code> on a class checks the reference, and a and b are two objects.</li>
+          <li><b>4:</b> <code>c = a</code> copies the reference, so both point to the same object.</li>
+          <li><b>5:</b> nothing throws. a and b get different default hash codes, land in different buckets, and HashSet <b>never calls Equals</b>. Both are added, so the count is 2. A silent wrong result.</li>
+          <li><b>6:</b> s2 is a different object, but <code>string</code> overloads <code>==</code> to compare the text.</li>
+          <li><b>Line X:</b> only warning <b>CS0659</b> (Equals overridden without GetHashCode), so the build still succeeds.</li>
+          <li><b>Fix:</b> <code>public override int GetHashCode() =&gt; Id.GetHashCode();</code>, built from the same field as Equals. Now the count is 1.</li>
+        </ul>
+      </div>
+
       <div class="qa"><div class="label">Interview</div>
         <details><summary>Why must GetHashCode be overridden when Equals is?</summary><div class="a"><p>Hash-based collections use GetHashCode to find the bucket and Equals to confirm. If equal objects return different hash codes, they land in different buckets, so lookups fail and duplicates appear.</p></div></details>
         <details><summary>Can two different objects have the same hash code?</summary><div class="a"><p>Yes, that is a collision and it's allowed. Equal objects must have equal hash codes, but equal hash codes don't mean equal objects.</p></div></details>
