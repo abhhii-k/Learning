@@ -2959,8 +2959,92 @@ var list = employees
         <li>Two anonymous objects with the same property names, types and order share one type, and <b>Equals compares values</b>.</li>
         <li>You must use <code>var</code>, and you can't return one as a typed result from a method. For that, use a class, a <code>record</code> or a tuple.</li>
       </ul>
+
+      <h3>What the compiler does</h3>
+<pre class="cs">var e = new Employee { Id = 101, Name = "Asha" };
+
+// what the compiler really generates
+var temp = new Employee();   // 1. constructor runs FIRST
+temp.Id = 101;               // 2. properties, in the order written
+temp.Name = "Asha";
+var e = temp;                // 3. only now is e assigned (never half-filled)</pre>
+      <div class="note key"><span class="tag">Rules &amp; errors</span><ul>
+        <li>The initializer runs <b>after</b> the constructor, so it can overwrite what the constructor set.</li>
+        <li><code>init</code> property set after creation: <b>CS8852</b>. A <code>required</code> property (C# 11) not set: <b>CS9035</b>.</li>
+        <li>Anonymous object properties are get-only: assigning one gives <b>CS0200</b>.</li>
+        <li>Anonymous types are <b>reference types</b> (classes). The compiler overrides <code>Equals</code>/<code>GetHashCode</code> to compare property values, but <code>==</code> still compares references.</li>
+      </ul></div>
+
+      <h3>Enterprise use</h3>
+      <div class="add"><span class="tag">Example · where you already use these</span>
+<pre class="cs">// EF Core projection: SELECT Id, Name only
+var list = await _db.Employees.Where(e =&gt; e.Dept == "HR")
+    .Select(e =&gt; new { e.Id, e.Name }).ToListAsync();
+
+// Quick API responses
+return Ok(new { message = "Employee created", id = emp.Id });
+return BadRequest(new { error = "Invalid email" });
+
+// Dapper parameters
+conn.QueryFirstOrDefaultAsync&lt;Employee&gt;(
+    "SELECT * FROM Employees WHERE Id = @Id AND Dept = @Dept", new { Id = 101, Dept = "HR" });
+
+// Route values
+return CreatedAtAction(nameof(GetById), new { id = emp.Id }, emp);
+
+// GroupBy on two columns (works because of value-based Equals/GetHashCode)
+var groups = employees.GroupBy(e =&gt; new { e.Dept, e.City });
+
+// Object initializers everywhere
+var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };</pre>
+      </div>
+
+      <div class="add"><span class="tag">Quiz · initializer + anonymous object</span>
+<pre class="cs">var e = new Employee { Id = 7, Name = "Ravi" };
+Console.WriteLine($"{e.Id} {e.Name} {e.Dept}");   // 1
+e.Dept = "HR";                                     // Line A
+
+var p1 = new { Id = 7, Name = "Ravi" };
+var p2 = new { Id = 7, Name = "Ravi" };
+Console.WriteLine(p1);                             // 2
+Console.WriteLine(p1.Equals(p2));                  // 3
+Console.WriteLine(p1 == p2);                       // 4
+p1.Name = "Asha";                                  // Line B
+
+public class Employee
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Dept { get; init; } = "General";
+    public Employee() { Console.WriteLine("ctor"); Name = "Unknown"; }
+}</pre>
+        <p><b>Output</b> (without Lines A and B):</p>
+<pre class="out">ctor
+7 Ravi General
+{ Id = 7, Name = Ravi }
+True
+False</pre>
+        <ul>
+          <li><b>Name is "Ravi":</b> the constructor sets "Unknown" first, then the initializer overwrites it.</li>
+          <li><b>3 True:</b> not because it's a value type (it isn't). The generated Equals compares property values.</li>
+          <li><b>4 False:</b> two different objects, and <code>==</code> is not overridden.</li>
+          <li><b>Line A:</b> CS8852, <code>init</code> can be set only during creation. <b>Line B:</b> CS0200, anonymous properties are read-only.</li>
+        </ul>
+        <p><b>Enterprise:</b> project with an anonymous object inside a method, but return a DTO from a service:</p>
+<pre class="cs">// Inside a method: anonymous object is fine
+var result = employees.Where(e =&gt; e.Id &gt; 5).Select(e =&gt; new { e.Name, e.Dept }).ToList();
+
+// Returning from a service: use a DTO / record
+public record EmployeeSummaryDto(string Name, string Dept);
+
+public async Task&lt;List&lt;EmployeeSummaryDto&gt;&gt; GetSummariesAsync()
+    =&gt; await _db.Employees.Where(e =&gt; e.Id &gt; 5)
+        .Select(e =&gt; new EmployeeSummaryDto(e.Name, e.Dept)).ToListAsync();</pre>
+        <p>An anonymous type has no name, so it can't be a method's return type. As <code>object</code>/<code>dynamic</code> it loses compile-time checks, IntelliSense and Swagger docs.</p>
+      </div>
       <div class="qa"><div class="label">Interview</div>
         <details><summary>Object initializer vs constructor?</summary><div class="a"><p>A constructor enforces required data and runs logic. An initializer is just property assignment after construction, which is more readable for many optional values. Use constructors (or <code>required</code>/<code>init</code> properties) for mandatory data.</p></div></details>
+        <details><summary>Does an object initializer skip the constructor?</summary><div class="a"><p>No. The constructor runs first, then properties are assigned in order on a temporary object, which is then assigned to the variable, so it's never seen half-initialized.</p></div></details>
         <details><summary>Anonymous type vs tuple vs record?</summary><div class="a"><p>Anonymous types: method-local, read-only, great in LINQ. Tuples <code>(int Id, string Name)</code>: lightweight value types you can return from methods. Records: named types with value equality, for DTOs shared across the app.</p></div></details>
       </div>
     </section>
