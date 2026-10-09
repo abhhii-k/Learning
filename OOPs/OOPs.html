@@ -3153,6 +3153,76 @@ fileB.Add(page);             // same page shared, so it lives on its own</pre></
           <li><b>Book and Pages</b>: <b>Composition</b> for a printed book; aggregation if pages can be reused or moved (see above)</li>
         </ul>
       </div>
+
+      <h3>Enterprise version · Web API + EF Core</h3>
+      <div class="add"><span class="tag">Association · DI dependencies</span>
+<pre class="cs">public class LeaveService
+{
+    private readonly IEmailSender _email;              // injected by DI, not owned
+    public LeaveService(IEmailSender email) =&gt; _email = email;
+    public void Approve(LeaveRequest request)          // passed in, not kept
+    {
+        request.Status = "Approved";
+        _email.Send(request.EmployeeEmail, "Leave approved");
+    }
+}</pre>
+        <p>Every injected dependency is association: the DI container, not the class, controls its lifetime.</p></div>
+      <div class="add"><span class="tag">Aggregation · Department → Employees</span>
+<pre class="cs">public class Employee
+{
+    public int Id { get; set; }
+    public int? DepartmentId { get; set; }             // nullable: can exist without a department
+    public Department? Department { get; set; }
+}
+
+modelBuilder.Entity&lt;Employee&gt;()
+    .HasOne(e =&gt; e.Department).WithMany(d =&gt; d.Employees)
+    .OnDelete(DeleteBehavior.SetNull);                 // delete dept → employees stay (or use Restrict)</pre></div>
+      <div class="add"><span class="tag">Composition · Invoice → InvoiceLines, Customer → Address</span>
+<pre class="cs">public class Invoice
+{
+    private readonly List&lt;InvoiceLine&gt; _lines = new();
+    public IReadOnlyList&lt;InvoiceLine&gt; Lines =&gt; _lines;        // read only, no setter
+
+    public void AddLine(string item, decimal price, int qty)  // the only way in
+    {
+        if (price &lt;= 0) throw new ArgumentException("Price must be positive");
+        _lines.Add(new InvoiceLine(item, price, qty));         // created INSIDE
+    }
+    public decimal Total =&gt; _lines.Sum(l =&gt; l.Price * l.Qty);
+}
+
+modelBuilder.Entity&lt;Invoice&gt;().HasMany(i =&gt; i.Lines).WithOne()
+    .OnDelete(DeleteBehavior.Cascade);                         // delete invoice → lines deleted
+modelBuilder.Entity&lt;Invoice&gt;().Navigation(i =&gt; i.Lines).HasField("_lines");
+
+modelBuilder.Entity&lt;Customer&gt;().OwnsOne(c =&gt; c.ShippingAddress);
+// no Address table: columns ShippingAddress_City, ShippingAddress_Pin live in the Customers row</pre>
+        <p>In DDD the Invoice is the <b>aggregate root</b>: children are always changed through it. (A DDD "aggregate" is built on composition, not aggregation.)</p></div>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>C# sign</th><th>EF Core</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Association</td><td>Injected, method parameter</td><td>Nothing / lookup FK</td><td>LeaveService → IEmailSender</td></tr>
+          <tr><td>Aggregation</td><td>Created outside, added</td><td>Nullable FK + <code>SetNull</code>/<code>Restrict</code></td><td>Department → Employees, Role → Users</td></tr>
+          <tr><td>Composition</td><td>Created inside, private list</td><td><code>Cascade</code>, <code>OwnsOne</code>/<code>OwnsMany</code></td><td>Order → Items, Customer → Address</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="add"><span class="tag">Quiz · enterprise</span>
+        <ul>
+          <li><b>Order / OrderItems:</b> composition, <code>Cascade</code>.</li>
+          <li><b>Role / Users:</b> aggregation, <code>SetNull</code> or <code>Restrict</code>.</li>
+          <li><b>PayrollController / IPayrollService:</b> association, DI, nothing in EF.</li>
+          <li><b>Customer / ShippingAddress</b> (no table of its own): <b>composition</b>, <code>OwnsOne</code>. One-to-one doesn't decide it; the lifecycle does.</li>
+        </ul>
+<pre class="cs">var invoice = new Invoice();
+invoice.AddLine("Laptop", 60000, 1);
+invoice.AddLine("Mouse", 500, 2);
+Console.WriteLine(invoice.Total);                       // Line 1
+invoice.Lines.Add(new InvoiceLine("Bag", 1500, 1));     // Line 2</pre>
+        <p><b>Line 1:</b> 61000. <b>Line 2:</b> doesn't compile (CS1061), <code>IReadOnlyList</code> has no <code>Add</code>. The Invoice keeps full control, so every line passes its rules.</p>
+        <p><b>Why not <code>public List&lt;InvoiceLine&gt; Lines { get; set; }</code>?</b> Callers can add/clear lines skipping validation, set the list to null (Total crashes), or share one list between two invoices. Keep it private, expose <code>IReadOnlyList</code>, add through methods.</p>
+      </div>
       <div class="qa"><div class="label">Interview</div>
         <details><summary>Give a real project example of each.</summary><div class="a"><p>Association: an <code>OrderService</code> method receives a <code>Customer</code>. Aggregation: a <code>Cart</code> holds <code>Product</code>s that exist in the catalogue anyway. Composition: an <code>Order</code> owns its <code>OrderLine</code>s; deleting the order deletes its lines (cascade delete in the database).</p></div></details>
         <details><summary>How does C# enforce composition if the GC frees memory?</summary><div class="a"><p>Through design, not keywords: the whole creates the part privately and never exposes or shares it. Then nothing else references the part, so it is collected with the whole. If the part holds resources, the whole disposes it in its own Dispose.</p></div></details>
