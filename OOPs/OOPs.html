@@ -3289,8 +3289,133 @@ var e = new Employee(new ContractPay(), new RemoteWork());   // any combination,
         </tbody>
       </table></div>
       <div class="note key"><span class="tag">When inheritance is still right</span><p>When the IS-A is true in every situation, the child can be used anywhere the parent is (Liskov, chapter 21), and you really want to share code. Framework examples: <code>ControllerBase</code>, <code>DbContext</code>, <code>Exception</code>.</p></div>
+
+      <h3>Simple version · DNA vs tools in a bag</h3>
+      <p>Inheritance is like <b>your DNA</b>: you're born with it and can't change it. Composition is like <b>tools in your bag</b>: add, remove or swap them any time.</p>
+<pre class="cs">public class Developer : Employee { public void Code() =&gt; Console.WriteLine("Writing code"); }
+public class Tester    : Employee { public void Test() =&gt; Console.WriteLine("Testing code"); }
+public class DeveloperTester : Developer, Tester { }   // ✗ CS1721: only ONE base class
+
+// composition: Employee HAS skills
+public interface ISkill { void Use(); }
+public class Coding  : ISkill { public void Use() =&gt; Console.WriteLine("Writing code"); }
+public class Testing : ISkill { public void Use() =&gt; Console.WriteLine("Testing code"); }
+
+public class Employee
+{
+    public string Name;
+    private List&lt;ISkill&gt; skills = new List&lt;ISkill&gt;();
+    public Employee(string name) { Name = name; }
+    public void AddSkill(ISkill skill) =&gt; skills.Add(skill);
+    public void Work()
+    {
+        Console.WriteLine($"{Name}:");
+        foreach (var s in skills) s.Use();
+    }
+}
+
+var meena = new Employee("Meena");
+meena.AddSkill(new Testing());
+meena.Work();                 // Meena: / Testing code
+meena.AddSkill(new Coding()); // changed at RUN TIME
+meena.Work();                 // Meena: / Testing code / Writing code</pre>
+      <div class="note key"><span class="tag">"Composition" here means any HAS-A</span><p>In chapter 19, composition (owns) and aggregation (has) are the two kinds of HAS-A. In "composition vs inheritance", composition is used <b>loosely</b> for any HAS-A, from the Gang of Four book: "favor object composition over class inheritance". The real question is <b>HAS-A or IS-A?</b> (Strictly, the skills example above is aggregation, since skills are created outside and passed in.)</p></div>
+
+      <div class="add"><span class="tag">Example · Penguin : Bird</span>
+<pre class="cs">public class Bird    { public virtual void Fly() =&gt; Console.WriteLine("Flying"); }
+public class Penguin : Bird
+{
+    public override void Fly() =&gt; throw new NotSupportedException("Penguins can't fly!");
+}
+List&lt;Bird&gt; birds = new() { new Bird(), new Penguin() };
+foreach (var b in birds) b.Fly();     // 💥 crashes on the Penguin</pre>
+        <p>Penguin inherits a promise it can't keep, so code that works with any Bird breaks. Model abilities as interfaces (<code>IFly</code>, <code>ISwim</code>, <code>IWalk</code>) and compose them. This is the <b>Liskov Substitution</b> principle (chapter 21).</p>
+      </div>
+
+      <h3>Shallow vs deep hierarchy</h3>
+<pre class="cs">Shallow ✅                         Deep ❌
+ControllerBase                     BaseEntity
+   └── EmployeesController            └── Person
+                                            └── Employee
+Employee                                          └── PermanentEmployee
+   ├── Manager                                          └── Manager
+   └── Developer                                              └── SeniorManager</pre>
+      <p>A <b>shallow</b> hierarchy has 1–2 levels; a <b>deep</b> one is a long chain. Deep chains are hard to read (you trace overrides through many classes), fragile (a change near the top affects everything below) and hard to extend (where does a "contract manager" go?). Beyond 2–3 levels, ask whether some of it should be composition, e.g. an <code>IContractType</code> the Employee <i>has</i>.</p>
+
+      <h3>Enterprise version</h3>
+      <div class="add"><span class="tag">The BaseService trap vs constructor injection</span>
+<pre class="cs">public class BaseService                         // grows into a "God class"
+{
+    protected void Log(string msg) { }
+    protected void SendEmail(string to, string body) { }
+    protected T? GetFromCache&lt;T&gt;(string key) =&gt; default;
+    protected void Audit(string action) { }
+}
+public class PayrollService : BaseService { }    // gets everything, can't mock SendEmail
+
+// composition: ask only for what you need
+public class PayrollService
+{
+    private readonly ILogger&lt;PayrollService&gt; _logger;
+    private readonly IEmailSender _email;
+    public PayrollService(ILogger&lt;PayrollService&gt; logger, IEmailSender email)
+    { _logger = logger; _email = email; }
+}</pre>
+        <p>Constructor injection <b>is</b> composition, which is why DI and "favor composition" go together. Inheriting just to reuse a method (<code>PayrollService : EmailService</code>) fails the IS-A test, leaks <code>SendEmail</code> into the public API and blocks mocking.</p>
+      </div>
+      <div class="add"><span class="tag">Decorator · add caching without touching the repository</span>
+<pre class="cs">public interface IEmployeeRepository { Employee? GetById(int id); }
+
+public class EmployeeRepository : IEmployeeRepository
+{
+    public Employee? GetById(int id) { Console.WriteLine($"DB hit for {id}"); return new Employee(id, "Ravi"); }
+}
+
+public class CachedEmployeeRepository : IEmployeeRepository     // decorator
+{
+    private readonly IEmployeeRepository _inner;                  // HAS-A the real repo
+    private readonly Dictionary&lt;int, Employee?&gt; _cache = new();
+    public CachedEmployeeRepository(IEmployeeRepository inner) =&gt; _inner = inner;
+
+    public Employee? GetById(int id)
+    {
+        if (_cache.TryGetValue(id, out var cached)) { Console.WriteLine($"Cache hit for {id}"); return cached; }
+        var emp = _inner.GetById(id);
+        _cache[id] = emp;
+        return emp;
+    }
+}
+
+builder.Services.AddScoped&lt;EmployeeRepository&gt;();
+builder.Services.AddScoped&lt;IEmployeeRepository&gt;(sp =&gt;
+    new CachedEmployeeRepository(sp.GetRequiredService&lt;EmployeeRepository&gt;()));
+
+IEmployeeRepository repo = new CachedEmployeeRepository(new EmployeeRepository());
+repo.GetById(1);   // DB hit for 1
+repo.GetById(1);   // Cache hit for 1
+repo.GetById(2);   // DB hit for 2</pre>
+        <p>Consumers still ask for <code>IEmployeeRepository</code>. Wrap again for logging: layers like an onion, zero inheritance. Middleware, HttpClient <code>DelegatingHandler</code>s and <code>BufferedStream</code> work the same way.</p>
+      </div>
+      <div class="add"><span class="tag">Example · retries on every HttpClient call</span>
+<pre class="cs">builder.Services.AddHttpClient&lt;PayrollApiClient&gt;()
+    .AddStandardResilienceHandler();     // .NET 8: retry, timeout, circuit breaker around every call
+// older projects: Polly with .AddPolicyHandler(...)</pre>
+        <p>Retries are added by <b>wrapping</b> the call in the HttpClient pipeline, not by subclassing HttpClient or writing retry loops in every service.</p>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Inheritance ✅</th><th>Composition / DI ✅</th></tr></thead>
+        <tbody>
+          <tr><td><code>LeaveController : ControllerBase</code></td><td>Logging, email, caching, retries</td></tr>
+          <tr><td><code>PayrollWorker : BackgroundService</code></td><td>Notifications, payment methods</td></tr>
+          <tr><td><code>AppDbContext : DbContext</code></td><td>PDF generation (<code>IPdfGenerator</code>)</td></tr>
+          <tr><td><code>Employee : BaseEntity</code></td><td>Anything that mixes, changes or needs mocking</td></tr>
+        </tbody>
+      </table></div>
       <div class="qa"><div class="label">Interview</div>
         <details><summary>Why favour composition over inheritance?</summary><div class="a"><p>It avoids class explosion and fragile base classes, keeps classes loosely coupled through interfaces, lets you change behaviour at runtime, and makes unit testing easy because collaborators can be mocked. It's also exactly how DI works in ASP.NET Core.</p></div></details>
+        <details><summary>What does "shallow hierarchy" mean?</summary><div class="a"><p>One or two levels of inheritance. I keep hierarchies shallow because deep chains are hard to read, fragile to change and hard to extend; when I need more variation I use composition instead of adding another level.</p></div></details>
+        <details><summary>How would you add caching to a repository without modifying it?</summary><div class="a"><p>With the decorator pattern: a CachedRepository that implements the same interface, holds the real repository, checks the cache first and delegates on a miss. I register it in DI so consumers don't change.</p></div></details>
+        <details><summary>What's wrong with Penguin : Bird when Bird has Fly()?</summary><div class="a"><p>Penguin inherits Fly() but can't honour it, so code that works with any Bird breaks. I'd model abilities as interfaces like IFly and ISwim and compose them, so each type only gets what it can really do.</p></div></details>
         <details><summary>How do you decide between them?</summary><div class="a"><p>Say the sentence out loud. "Manager <b>is an</b> Employee" → inheritance. "Employee <b>has a</b> pay policy" → composition. If the "is-a" is only true sometimes, or you're inheriting just to reuse a method, use composition.</p></div></details>
       </div>
     </section>
