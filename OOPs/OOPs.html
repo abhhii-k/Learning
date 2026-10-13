@@ -3606,6 +3606,105 @@ public class PayrollService
       <div class="ch-head"><span class="ch-no">22</span><h2>Dependency Injection</h2><span class="newtag">New lesson</span></div>
       <p class="lede">Instead of a class creating the objects it needs with <code>new</code>, they are <b>given to it</b> from outside, usually through the constructor. ASP.NET Core has a DI container built in.</p>
 
+      <h3>Simple version · the mobile charger</h3>
+      <p><b>Without DI</b> the charger is <b>soldered into</b> the phone: charger broken, throw away the phone. <b>With DI</b> the phone has a <b>USB-C port</b> (an interface) and you <b>plug in</b> any charger. The port is the interface; plugging in is injection.</p>
+<pre class="cs">public class EmailSender
+{
+    public void Send(string to, string msg) =&gt; Console.WriteLine($"Email to {to}: {msg}");
+}
+
+public class PayrollService
+{
+    private readonly EmailSender _email = new EmailSender();   // ✗ creates it itself ("soldered")
+
+    public void Run()
+    {
+        Console.WriteLine("Payroll done");
+        _email.Send("hr@company.com", "Salaries paid");
+    }
+}</pre>
+      <p>Problems: switching to SMS means <b>editing PayrollService</b>; a unit test of <code>Run()</code> sends a <b>real email</b> because you can't replace the sender; the class is <b>tightly coupled</b> to <code>EmailSender</code>.</p>
+<pre class="cs">public interface IMessageSender                         // the "USB-C port"
+{
+    void Send(string to, string msg);
+}
+public class EmailSender : IMessageSender
+{
+    public void Send(string to, string msg) =&gt; Console.WriteLine($"Email to {to}: {msg}");
+}
+public class SmsSender : IMessageSender
+{
+    public void Send(string to, string msg) =&gt; Console.WriteLine($"SMS to {to}: {msg}");
+}
+
+public class PayrollService
+{
+    private readonly IMessageSender _sender;
+    public PayrollService(IMessageSender sender) =&gt; _sender = sender;   // ✓ "give me any sender"
+
+    public void Run()
+    {
+        Console.WriteLine("Payroll done");
+        _sender.Send("hr@company.com", "Salaries paid");
+    }
+}
+
+new PayrollService(new EmailSender()).Run();   // plug in email
+new PayrollService(new SmsSender()).Run();     // plug in SMS, PayrollService unchanged</pre>
+<pre class="out">Payroll done
+Email to hr@company.com: Salaries paid
+Payroll done
+SMS to hr@company.com: Salaries paid</pre>
+      <div class="note key"><span class="tag">Interview one-liner</span><p>"Dependency Injection means a class doesn't create the objects it needs; it receives them from outside, usually through the constructor. That makes the code loosely coupled, easy to change and easy to test. In ASP.NET Core, we register services in Program.cs, and the framework's DI container creates those objects and passes them in for us."</p><p>Shortest: "Don't create the objects you need with <code>new</code>; ask for them in the constructor, and let the DI container give them to you."</p></div>
+
+      <h3>Who does the "giving"? The DI container</h3>
+      <p>The built-in container (<code>IServiceProvider</code>) is like a storekeeper with a register. You write the register in Program.cs; on each request it reads constructors and builds the whole object graph, <b>deepest dependency first</b>. This is called <b>resolving</b>.</p>
+<pre class="cs">Request ──► Container: "I need PayrollController"
+              │
+              ├─ needs PayrollService
+              │     └─ needs IMessageSender ──► register says EmailSender ──► new EmailSender()
+              │     └─ new PayrollService(emailSender)
+              └─ new PayrollController(payrollService) ──► your action runs</pre>
+      <div class="add"><span class="tag">Example · the container by hand (console app)</span>
+<pre class="cs">using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();                        // empty register
+services.AddScoped&lt;IMessageSender, EmailSender&gt;();             // write entries
+services.AddScoped&lt;PayrollService&gt;();
+
+ServiceProvider provider = services.BuildServiceProvider();   // this IS the container
+
+var payroll = provider.GetRequiredService&lt;PayrollService&gt;();  // "give me a PayrollService"
+payroll.Run();</pre>
+        <p><code>GetRequiredService</code> is what ASP.NET Core calls for you when a request arrives. Forget a registration and you get <i>"Unable to resolve service for type 'IMessageSender' while attempting to activate 'PayrollService'."</i></p>
+      </div>
+      <div class="add"><span class="tag">Example · unit test with a fake sender</span>
+<pre class="cs">public class FakeSender : IMessageSender
+{
+    public int CallCount { get; private set; }
+    public string? LastTo { get; private set; }
+    public void Send(string to, string msg) { CallCount++; LastTo = to; }   // sends nothing
+}
+
+[Fact]
+public void Run_SendsOneMessageToHr()
+{
+    var fake = new FakeSender();
+    new PayrollService(fake).Run();
+
+    Assert.Equal(1, fake.CallCount);
+    Assert.Equal("hr@company.com", fake.LastTo);
+}
+
+// same thing with Moq
+var mock = new Mock&lt;IMessageSender&gt;();
+new PayrollService(mock.Object).Run();
+mock.Verify(s =&gt; s.Send("hr@company.com", It.IsAny&lt;string&gt;()), Times.Once);</pre>
+        <p>No email is sent, the test is fast, and you can still check PayrollService did its job. This only works because PayrollService takes an interface.</p>
+      </div>
+
+      <h3>Enterprise version</h3>
+
       <div class="vs stack">
         <div class="vs-col ovr">
           <h4 class="vs-title">Without DI</h4>
@@ -3666,6 +3765,60 @@ var app = builder.Build();</pre>
       </table></div>
       <div class="note fix"><span class="tag">Classic trap: captive dependency</span><p>Never inject a <b>Scoped</b> service (like DbContext) into a <b>Singleton</b>. The singleton lives forever, so it keeps the first request's DbContext alive and shares it across threads, which causes stale data and concurrency errors. In Development, ASP.NET Core throws "Cannot consume scoped service from singleton". Rule: a service may depend only on services that live <b>as long or longer</b> than itself.</p></div>
 
+      <div class="add"><span class="tag">Office analogy</span><p><b>Transient</b> = paper cup, a new one every time. <b>Scoped</b> = visitor badge, one per visit (request), shared with everyone you meet during it. <b>Singleton</b> = the building reception, one for everyone all day.</p></div>
+      <div class="add"><span class="tag">Example · see it with Guids</span>
+<pre class="cs">public class TransientOp { public Guid Id { get; } = Guid.NewGuid(); }
+public class ScopedOp    { public Guid Id { get; } = Guid.NewGuid(); }
+public class SingletonOp { public Guid Id { get; } = Guid.NewGuid(); }
+
+builder.Services.AddTransient&lt;TransientOp&gt;();
+builder.Services.AddScoped&lt;ScopedOp&gt;();
+builder.Services.AddSingleton&lt;SingletonOp&gt;();
+// a controller and an AuditService both inject all three; GET /api/lifetime prints both Ids</pre>
+<pre class="out">Request 1:  Transient = a1f3 vs 7c2e   Scoped = 9b10 vs 9b10   Singleton = 44d0 vs 44d0
+Request 2:  Transient = e5a9 vs 0d71   Scoped = 3f8c vs 3f8c   Singleton = 44d0 vs 44d0</pre>
+        <p>Transient differs even inside one request; Scoped is the same inside a request and new for the next; Singleton never changes.</p>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Service</th><th>Lifetime</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><code>AppDbContext</code></td><td>Scoped</td><td><code>AddDbContext</code> default; not thread-safe; one unit of work per request</td></tr>
+          <tr><td>Repositories, <code>PayrollService</code>, <code>CurrentUserService</code></td><td>Scoped</td><td>Use DbContext or hold this request's data</td></tr>
+          <tr><td><code>PasswordHasher</code>, mappers, PDF generator</td><td>Transient (or Singleton)</td><td>Stateless, cheap</td></tr>
+          <tr><td>Currency-rate cache, config, <code>IMemoryCache</code></td><td>Singleton</td><td>Same data for everyone; must be thread-safe</td></tr>
+          <tr><td><code>ILogger&lt;T&gt;</code></td><td>Singleton</td><td>Registered by the framework; thread-safe</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note fix"><span class="tag">Never keep per-user data in a Singleton</span>
+<pre class="cs">08:00:01  Ravi's request → CurrentUserService.UserId = 101
+08:00:01  Asha's request → CurrentUserService.UserId = 205   (same Singleton object: overwrites Ravi)
+08:00:02  Ravi's request continues → reads UserId = 205 → applies leave for Asha</pre>
+        <p>One Singleton is shared by all users at the same time, so user B's request overwrites user A's data: a data leak and security bug. Anything that belongs to one request is <b>Scoped</b>.</p></div>
+      <div class="note key"><span class="tag">Captive dependency in Production</span><p>The "Cannot consume scoped service from singleton" check runs in <b>Development</b> only by default, so the bug can reach Production unnoticed. Lifetime rule: Singleton → Singleton only; Scoped → Scoped, Singleton; Transient → anything.</p></div>
+      <div class="add"><span class="tag">Fixing a captive dependency</span>
+        <p><b>Fix 1 (usually right):</b> align lifetimes, e.g. <code>AddScoped&lt;ILeaveService, LeaveService&gt;()</code>. <b>Fix 2:</b> when the class must be a Singleton (a <code>BackgroundService</code>), inject <code>IServiceScopeFactory</code> and create a scope each time:</p>
+<pre class="cs">public class PayslipEmailJob : BackgroundService            // background services are Singletons
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    public PayslipEmailJob(IServiceScopeFactory scopeFactory) =&gt; _scopeFactory = scopeFactory;
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            using (var scope = _scopeFactory.CreateScope())            // a "mini request"
+            {
+                var db = scope.ServiceProvider.GetRequiredService&lt;AppDbContext&gt;();
+                var pending = await db.Payslips.Where(p =&gt; !p.Emailed).ToListAsync(stoppingToken);
+                // ... send emails, mark Emailed = true ...
+                await db.SaveChangesAsync(stoppingToken);
+            }                                                          // DbContext disposed here
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        }
+    }
+}</pre>
+      </div>
+
       <h3>Three ways to inject</h3>
       <div class="tbl"><table>
         <thead><tr><th>Type</th><th>How</th><th>Use</th></tr></thead>
@@ -3675,6 +3828,24 @@ var app = builder.Build();</pre>
           <tr><td>Property</td><td><code>public ILogger Logger { get; set; }</code></td><td>Optional dependencies; not supported by the built-in container</td></tr>
         </tbody>
       </table></div>
+      <div class="add"><span class="tag">Example · method and property injection</span>
+<pre class="cs">// Method injection: one method only
+public string Run(IMessageSender sender) { sender.Send("hr@company.com", "Salaries paid"); return "Payroll done"; }
+
+[HttpPost("notify")]
+public IActionResult Notify([FromServices] IMessageSender sender)   // container injects into this action only
+{
+    sender.Send("hr@company.com", "Test");
+    return Ok();
+}
+
+// Property injection: set after creation (built-in container doesn't do this)
+public class PayrollService
+{
+    public IMessageSender? Sender { get; set; }
+    public string Run() { Sender?.Send("hr@company.com", "Salaries paid"); return "Payroll done"; }   // must null-check
+}</pre>
+      </div>
 
       <h3>Why it matters: unit testing</h3>
 <pre class="cs">var fakeRepo = new Mock&lt;IEmployeeRepository&gt;();
@@ -3684,10 +3855,19 @@ var service = new EmployeeService(fakeRepo.Object);   // no database needed
 Assert.Single(service.GetAll());</pre>
 
       <div class="qa"><div class="label">Interview</div>
+        <details><summary>What is Dependency Injection?</summary><div class="a"><p>A class doesn't create the objects it needs; it receives them from outside, usually through the constructor. That makes code loosely coupled, easy to change and easy to test. In ASP.NET Core the built-in container creates and injects them based on registrations in Program.cs.</p></div></details>
+        <details><summary>Explain Transient, Scoped and Singleton.</summary><div class="a"><p>Transient creates a new object every time it's injected, Scoped creates one per HTTP request, and Singleton creates one for the whole application. DbContext is Scoped because it isn't thread-safe and tracks changes per unit of work.</p></div></details>
+        <details><summary>What is a captive dependency?</summary><div class="a"><p>A longer-lived service, like a Singleton, holding a shorter-lived one, like a Scoped DbContext, so the scoped object gets stuck for the app's lifetime and is shared across threads. Fix it by aligning lifetimes, or with IServiceScopeFactory when it must stay a Singleton.</p></div></details>
         <details><summary>When would you use Scoped instead of Singleton?</summary><div class="a"><p>When the service holds per-request state or isn't thread-safe, like DbContext or a repository using it. Singleton is for stateless or thread-safe shared things like configuration or a cache.</p></div></details>
         <details><summary>DI vs IoC vs DIP?</summary><div class="a"><p>DIP: the principle, depend on abstractions. IoC: the idea that something else controls object creation and flow. DI: the concrete technique, where dependencies are passed in, usually by a container.</p></div></details>
         <details><summary>What happens if two implementations are registered for the same interface?</summary><div class="a"><p>Constructor injection of <code>IEmailSender</code> gets the <b>last</b> one registered. Inject <code>IEnumerable&lt;IEmailSender&gt;</code> to get all of them. .NET 8 added keyed services (<code>AddKeyedScoped</code>) to pick one by key.</p></div></details>
         <details><summary>How do you use a scoped service inside a singleton or background service?</summary><div class="a"><p>Inject <code>IServiceScopeFactory</code>, create a scope with <code>using var scope = factory.CreateScope()</code>, and resolve the scoped service from <code>scope.ServiceProvider</code>.</p></div></details>
+      </div>
+      <div class="qa"><div class="label">Quiz · with answers</div>
+        <details><summary>Simple: what's wrong with PayrollService creating its own EmailSender with new?</summary><div class="a"><p>It's tightly coupled: switching to SMS means editing PayrollService, and Run() can't be unit tested in isolation because the real sender can't be replaced, so every test sends a real email.</p></div></details>
+        <details><summary>Simple: how do you test PayrollService.Run() without sending email?</summary><div class="a"><p>Inject a FakeSender (or a Moq mock) that implements IMessageSender and only records calls, then assert it was called once with the right address.</p></div></details>
+        <details><summary>Lifetimes: AppDbContext, CurrentUserService, CurrencyRateCache, SalarySlipPdfGenerator?</summary><div class="a"><p>Scoped (per request, not thread-safe) · Scoped (this request's user; Singleton would mix users) · Singleton (shared data loaded once, must be thread-safe; Scoped would reload every request) · Transient (stateless; Singleton also fine).</p></div></details>
+        <details><summary>Find the bug: LeaveService is registered as a Singleton and injects AppDbContext.</summary><div class="a"><p>Captive dependency: the Singleton keeps one non-thread-safe DbContext for the app's lifetime. Development throws "Cannot consume scoped service 'AppDbContext' from singleton 'ILeaveService'". Fix: make LeaveService Scoped, or inject IServiceScopeFactory and create a scope per call.</p></div></details>
       </div>
     </section>
 
