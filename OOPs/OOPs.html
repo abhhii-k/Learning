@@ -3451,6 +3451,190 @@ public class PayslipEmailer     { public void Send(Employee e) { ... } }
 // each class has one job and one reason to change</pre></div>
         </div>
         <p class="ans"><b>Say it:</b> "Each class does one job. In my API, controllers only handle HTTP, services hold business logic, and repositories talk to the database."</p>
+
+        <h4>Simple version · the restaurant</h4>
+        <p>One person who cooks, serves <b>and</b> bills: a menu change, a new UPI system or one sick day affects everything. A real restaurant has a <b>chef</b>, a <b>waiter</b> and a <b>cashier</b>, each with one job. One class = one job = one reason to change.</p>
+<pre class="cs">public class Employee                 // just data
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public decimal BasicSalary { get; set; }
+}
+public class SalaryCalculator         // salary rules only
+{
+    public decimal Calculate(Employee e) =&gt; e.BasicSalary + (e.BasicSalary * 0.20m);   // + 20% HRA
+}
+public class EmployeeRepository       // saving only
+{
+    public void Save(Employee e) =&gt; Console.WriteLine($"INSERT INTO Employees ... {e.Name}");
+}
+public class PayslipPrinter           // payslip formatting only
+{
+    public void Print(Employee e, decimal salary) =&gt; Console.WriteLine($"Payslip for {e.Name}: {salary}");
+}
+
+var ravi = new Employee { Id = 1, Name = "Ravi", BasicSalary = 50000 };
+var salary = new SalaryCalculator().Calculate(ravi);
+new EmployeeRepository().Save(ravi);
+new PayslipPrinter().Print(ravi, salary);</pre>
+<pre class="out">INSERT INTO Employees ... Ravi
+Payslip for Ravi: 60000.00</pre>
+        <p>HRA rule changes → only <code>SalaryCalculator</code>. Database changes → only <code>EmployeeRepository</code>. PDF payslip → only <code>PayslipPrinter</code>. Each is small and testable on its own (no database needed to test the salary rule).</p>
+        <div class="note key"><span class="tag">How to spot a violation</span><p>You describe the class and need the word <b>"and"</b>; the name is a vague <b>Manager/Helper</b> with unrelated methods; the file is huge and many people edit it for different reasons.</p><p><b>Don't overdo it:</b> SRP is not "one method per class". <code>SalaryCalculator</code> can have CalculateHra, CalculatePf and CalculateNet, because they all change for the same reason.</p></div>
+        <div class="add"><span class="tag">Example · splitting a LeaveRequest</span>
+<pre class="cs">public class LeaveRequest      { public int EmployeeId; public DateTime From, To; }        // data
+public class LeaveValidator    { public bool IsValid(LeaveRequest r) =&gt; r.From &lt;= r.To; }   // leave rules
+public class LeaveRepository   { public void Save(LeaveRequest r) { } }                     // saving
+public class LeaveNotifier     { public void NotifyManager(LeaveRequest r) { } }            // telling the manager</pre>
+          <p>Name each class after its exact job (<code>LeaveRepository</code>, not a generic <code>SaveService</code>) and pass the domain object, not a <code>string</code>.</p>
+        </div>
+
+        <h4>Enterprise version · fat controllers and God services</h4>
+        <div class="add"><span class="tag">The fat controller ✗</span>
+<pre class="cs">[HttpPost]
+public async Task&lt;IActionResult&gt; Apply(ApplyLeaveDto dto)
+{
+    if (dto.From &gt; dto.To) return BadRequest("Invalid dates");                 // 1. validation
+    var balance = await _db.LeaveBalances.SingleAsync(b =&gt; b.EmployeeId == dto.EmployeeId);
+    // ... balance check, insert leave, reduce balance, SaveChanges            // 2. rules + DB
+    using var smtp = new SmtpClient("smtp.company.com");                       // 3. email
+    await smtp.SendMailAsync("hr@company.com", managerEmail, "Leave request", "...");
+    _db.AuditLogs.Add(new AuditLog { Action = "LeaveApplied" });               // 4. audit
+    await _db.SaveChangesAsync();
+    return Ok(leave.Id);                                                       // 5. HTTP
+}</pre>
+          <p>Five reasons to change in one method (HR rules, DB, email, audit, HTTP). Testing the leave rules needs a database and an SMTP server; the mobile API or a bulk import has to copy-paste the rules; developers get merge conflicts.</p>
+        </div>
+<pre class="cs">LeaveController        → HTTP only: take request, call service, return status code
+  └─ LeaveService      → coordinates the "apply leave" use case
+       ├─ LeaveValidator        → leave rules
+       ├─ ILeaveRepository      → database
+       ├─ ILeaveNotifier        → email / Teams
+       └─ IAuditLogger          → audit trail</pre>
+<pre class="cs">[HttpPost]
+public async Task&lt;IActionResult&gt; Apply(ApplyLeaveDto dto)          // controller: HTTP only
+{
+    var result = await _leaves.ApplyAsync(dto);
+    return result.Success ? Ok(result.LeaveId) : BadRequest(result.Error);
+}
+
+public async Task&lt;ApplyLeaveResult&gt; ApplyAsync(ApplyLeaveDto dto)  // LeaveService: coordinates
+{
+    var error = await _validator.ValidateAsync(dto);
+    if (error is not null) return ApplyLeaveResult.Fail(error);
+
+    var leaveId = await _repo.CreateAsync(dto);
+    await _notifier.NotifyManagerAsync(dto.EmployeeId, leaveId);
+    await _audit.LogAsync("LeaveApplied", dto.EmployeeId);
+    return ApplyLeaveResult.Ok(leaveId);
+}</pre>
+        <p>Switch email to Teams: add a <code>TeamsLeaveNotifier</code> and change one line in Program.cs. HR rule change: only <code>LeaveValidator</code>. Mock the repository to unit test the rules.</p>
+        <div class="note key"><span class="tag">"But LeaveService calls 4 classes"</span><p>Its one job is <b>coordinating the apply-leave use case</b>. It calls others but holds no rules, SQL or email code. Coordinating is a single responsibility.</p></div>
+        <div class="add"><span class="tag">The God service · split it safely</span>
+          <p>An <code>EmployeeService</code> with 80 methods for leave, payroll, documents and password reset: split by <b>business area</b> into <code>LeaveService</code>, <code>PayrollService</code>, <code>EmployeeDocumentService</code>, <code>AccountService</code>. Test: <b>who asks for changes?</b> If HR and Finance and IT Security, it's too many (Robert C. Martin: "responsible to one actor").</p>
+          <p>In a live project, never big-bang: add tests first, extract one area at a time, keep the old method forwarding, move callers in small PRs, then delete it.</p>
+<pre class="cs">public class EmployeeService
+{
+    private readonly ILeaveService _leaveService;
+    public EmployeeService(ILeaveService leaveService) =&gt; _leaveService = leaveService;
+
+    [Obsolete("Use ILeaveService instead")]
+    public Task ApplyLeave(ApplyLeaveDto dto) =&gt; _leaveService.ApplyAsync(dto);   // just forwards
+}</pre>
+        </div>
+
+        <h4>SRP at app level · global exception handling</h4>
+        <p>Don't copy "try, catch, log, return 500" into every action. Put one try/catch <b>first in the middleware pipeline</b>, so it catches errors from every controller, service and repository behind it.</p>
+<pre class="cs">public class ExceptionMiddleware
+{
+    private readonly RequestDelegate _next;                 // "the rest of the pipeline"
+    private readonly ILogger&lt;ExceptionMiddleware&gt; _logger;
+
+    public ExceptionMiddleware(RequestDelegate next, ILogger&lt;ExceptionMiddleware&gt; logger)
+    { _next = next; _logger = logger; }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);                           // run everything after me
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception for {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+
+            var (status, message) = ex switch
+            {
+                NotFoundException     =&gt; (404, ex.Message),
+                BusinessRuleException =&gt; (400, ex.Message),
+                _                     =&gt; (500, "Something went wrong. Please try again later.")
+            };
+            context.Response.StatusCode = status;
+            await context.Response.WriteAsJsonAsync(new { status, message, traceId = context.TraceIdentifier });
+        }
+    }
+}
+
+// Program.cs
+app.UseMiddleware&lt;ExceptionMiddleware&gt;();   // FIRST, so it wraps everything below
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+// service: just throw, no HTTP knowledge
+var leave = await _repo.GetAsync(id) ?? throw new NotFoundException($"Leave {id} not found");</pre>
+<pre class="out">Log:      fail: ExceptionMiddleware[0] Unhandled exception for GET /api/leaves/5
+          Microsoft.Data.SqlClient.SqlException: A network-related error occurred...
+Response: 500 { "status": 500, "message": "Something went wrong. Please try again later.", "traceId": "0HN7K2...:00000003" }</pre>
+        <p>Full error to the <b>log</b>, a safe message plus traceId to the <b>client</b>. Never send <code>ex.Message</code> of an unexpected exception or a stack trace to clients in production. Custom exceptions map to 404/400 in one place.</p>
+        <div class="add"><span class="tag">.NET 8+ · IExceptionHandler (recommended for new projects)</span>
+<pre class="cs">public class GlobalExceptionHandler : IExceptionHandler
+{
+    private readonly ILogger&lt;GlobalExceptionHandler&gt; _logger;
+    public GlobalExceptionHandler(ILogger&lt;GlobalExceptionHandler&gt; logger) =&gt; _logger = logger;
+
+    public async ValueTask&lt;bool&gt; TryHandleAsync(HttpContext context, Exception ex, CancellationToken ct)
+    {
+        _logger.LogError(ex, "Unhandled exception");
+        var (status, title) = ex switch
+        {
+            NotFoundException     =&gt; (404, ex.Message),
+            BusinessRuleException =&gt; (400, ex.Message),
+            _                     =&gt; (500, "Something went wrong")
+        };
+        context.Response.StatusCode = status;
+        await context.Response.WriteAsJsonAsync(new ProblemDetails { Status = status, Title = title }, ct);
+        return true;                                   // "I handled it"
+    }
+}
+
+// Program.cs
+builder.Services.AddExceptionHandler&lt;GlobalExceptionHandler&gt;();
+builder.Services.AddProblemDetails();
+var app = builder.Build();
+app.UseExceptionHandler();                             // first in the pipeline</pre>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>Way</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td>Custom middleware</td><td>Any .NET Core version; shows the whole mechanism</td></tr>
+            <tr><td><code>IExceptionHandler</code></td><td>.NET 8+, built in, standard ProblemDetails</td></tr>
+            <tr><td>Exception filter</td><td>Older style; only MVC controller errors</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note key"><span class="tag">Still catch locally when you can act</span><p>Retry, fallback, or turning a <code>DbUpdateConcurrencyException</code> into a friendly message. What goes away is only the catch-log-500 boilerplate. Normal info logging (<code>_logger.LogInformation</code>) inside a service is fine.</p></div>
+        <div class="qa"><div class="label">Interview · SRP</div>
+          <details><summary>What is the Single Responsibility Principle?</summary><div class="a"><p>A class should have only one reason to change, meaning one job. I wouldn't put salary calculation, saving and payslip printing in one Employee class; I'd split them into a SalaryCalculator, a repository and a PayslipPrinter so each changes and is tested independently.</p></div></details>
+          <details><summary>How does SRP look in a Web API?</summary><div class="a"><p>Controllers stay thin and only handle HTTP. A service coordinates the use case, and validation, data access and notifications live in their own classes. Each changes for one reason and can be unit tested in isolation.</p></div></details>
+          <details><summary>How would you break up a 4,000-line God service in a live project?</summary><div class="a"><p>Split by business area, incrementally: cover it with tests, extract one area at a time, leave the old methods forwarding to the new service and marked Obsolete, migrate callers in small PRs, then delete the old code.</p></div></details>
+          <details><summary>How do you handle exceptions globally?</summary><div class="a"><p>With a custom middleware or IExceptionHandler in .NET 8, registered first in the pipeline. It logs the full exception with a trace Id, maps custom exceptions like NotFoundException to 404, and returns a clean ProblemDetails response without leaking internals.</p></div></details>
+        </div>
+        <div class="qa"><div class="label">Quiz · with answers</div>
+          <details><summary>Is "SRP means one method per class" true?</summary><div class="a"><p>False. It's one reason to change; methods that change for the same reason belong together.</p></div></details>
+          <details><summary>Approve action: loads the leave, checks it's Pending, saves, sends mail with a new SmtpClient, logs. What goes where?</summary><div class="a"><p>HTTP responses stay in the controller; the flow moves to LeaveService; the Pending rule to a validator; loading and saving to ILeaveRepository; email to an ILeaveNotifier instead of new SmtpClient. Info logging can stay in the service via ILogger; unexpected errors go to the global handler.</p></div></details>
+          <details><summary>Does LeaveService violate SRP because it calls a validator, repository, notifier and audit logger?</summary><div class="a"><p>No. Its one job is coordinating the use case; it contains no rules, SQL or email code itself.</p></div></details>
+        </div>
       </article>
 
       <article class="principle" id="ocp">
