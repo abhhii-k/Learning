@@ -3660,6 +3660,147 @@ public class Developer : Employee { public override decimal Bonus() =&gt; Salary
 public class Tester    : Employee { public override decimal Bonus() =&gt; Salary * 0.08m; }  // just add</pre></div>
         </div>
         <p class="ans"><b>Say it:</b> "Instead of growing if/switch chains, I use polymorphism or the Strategy pattern, so a new case is a new class. ASP.NET Core middleware and filters work this way too."</p>
+
+        <h4>Simple version · the extension board</h4>
+        <p>House wiring is done and tested. A new TV? You <b>plug it into a socket</b>, you don't rewire the house. The wiring is <b>closed</b> (untouched) but <b>open</b> to new devices. The socket is the interface; each device is a new class.</p>
+<pre class="cs">public interface IBonusRule                           // the "socket"
+{
+    string Role { get; }
+    decimal Calculate(decimal salary);
+}
+public class ManagerBonus   : IBonusRule { public string Role =&gt; "Manager";   public decimal Calculate(decimal s) =&gt; s * 0.20m; }
+public class DeveloperBonus : IBonusRule { public string Role =&gt; "Developer"; public decimal Calculate(decimal s) =&gt; s * 0.10m; }
+public class TesterBonus    : IBonusRule { public string Role =&gt; "Tester";    public decimal Calculate(decimal s) =&gt; s * 0.08m; }  // ➕ new class only
+
+public class BonusCalculator                          // closed: never edited again
+{
+    private readonly List&lt;IBonusRule&gt; _rules;
+    public BonusCalculator(List&lt;IBonusRule&gt; rules) =&gt; _rules = rules;
+
+    public decimal Calculate(string role, decimal salary)
+    {
+        var rule = _rules.FirstOrDefault(r =&gt; r.Role == role);
+        return rule?.Calculate(salary) ?? 0;
+    }
+}
+
+var calc = new BonusCalculator(new List&lt;IBonusRule&gt; { new ManagerBonus(), new DeveloperBonus(), new TesterBonus() });
+Console.WriteLine(calc.Calculate("Manager", 100000));
+Console.WriteLine(calc.Calculate("Tester", 50000));
+Console.WriteLine(calc.Calculate("Intern", 20000));</pre>
+<pre class="out">20000.00
+4000.00
+0</pre>
+        <div class="add"><span class="tag">Example · leave types (quiz answer)</span>
+<pre class="cs">public interface ILeaveRule
+{
+    string LeaveType { get; }
+    int Days { get; }
+}
+public class MaternityLeave : ILeaveRule { public string LeaveType =&gt; "Maternity"; public int Days =&gt; 182; }
+public class PaternityLeave : ILeaveRule { public string LeaveType =&gt; "Paternity"; public int Days =&gt; 15; }
+
+public class LeaveDaysCalculator
+{
+    private readonly List&lt;ILeaveRule&gt; _rules;
+    public LeaveDaysCalculator(List&lt;ILeaveRule&gt; rules) =&gt; _rules = rules;
+    public int GetDays(string leaveType) =&gt; _rules.FirstOrDefault(r =&gt; r.LeaveType == leaveType)?.Days ?? 0;
+}</pre>
+          <p>A <code>switch</code> on leave type is not OCP: every new type edits the same method. Here "Paternity" is one new class. Tip: write the <b>interface first</b> to avoid copy-paste mistakes.</p>
+        </div>
+        <div class="note key"><span class="tag">Don't overdo it</span><p>"Closed" doesn't mean never edit: bug fixes and genuine changes are fine. OCP is for things that <b>keep growing</b> (roles, payment types, formats, channels). A 2–3 case <code>if</code> that never grows stays an <code>if</code>; refactor when you're about to add the second or third case.</p></div>
+
+        <h4>Enterprise version · plug-ins with DI</h4>
+        <p>A 300-line if/else over payment gateways means every new gateway edits code that moves real money. Instead: one class per gateway, register all of them, inject <code>IEnumerable&lt;T&gt;</code>.</p>
+<pre class="cs">public interface IPaymentGateway
+{
+    string Name { get; }
+    Task&lt;PaymentResult&gt; PayAsync(decimal amount, string account);
+}
+public class RazorpayGateway : IPaymentGateway { public string Name =&gt; "Razorpay"; /* Razorpay code only */ }
+public class StripeGateway   : IPaymentGateway { public string Name =&gt; "Stripe";   /* Stripe code only */ }
+
+builder.Services.AddScoped&lt;IPaymentGateway, RazorpayGateway&gt;();
+builder.Services.AddScoped&lt;IPaymentGateway, StripeGateway&gt;();
+builder.Services.AddScoped&lt;IPaymentGateway, PhonePeGateway&gt;();     // ➕ new gateway = 1 class + 1 line
+
+public class ReimbursementService                                    // closed for new gateways
+{
+    private readonly IEnumerable&lt;IPaymentGateway&gt; _gateways;          // ALL registered gateways
+    public ReimbursementService(IEnumerable&lt;IPaymentGateway&gt; gateways) =&gt; _gateways = gateways;
+
+    public Task&lt;PaymentResult&gt; PayAsync(string gateway, decimal amount, string account)
+    {
+        var g = _gateways.FirstOrDefault(x =&gt; x.Name == gateway)
+                ?? throw new BusinessRuleException($"Gateway {gateway} not supported");
+        return g.PayAsync(amount, account);
+    }
+}</pre>
+        <div class="note fix"><span class="tag">Several registrations, one interface</span>
+<pre class="cs">IPaymentGateway gateway                     → StripeGateway only (last registered wins)
+IEnumerable&lt;IPaymentGateway&gt; gateways       → Razorpay AND Stripe (all, in order)
+[FromKeyedServices("razorpay")] ...         → exactly the one you named</pre>
+          <p>Injecting the plain interface gives only the <b>last</b> registration, a classic "why does it always use the second one?" bug. <code>class TestController(IPaymentGateway gateway)</code> is a C# 12 primary constructor and would get Stripe.</p></div>
+        <div class="add"><span class="tag">.NET 8 keyed services · export formats</span>
+<pre class="cs">builder.Services.AddKeyedScoped&lt;IReportExporter, ExcelExporter&gt;("excel");
+builder.Services.AddKeyedScoped&lt;IReportExporter, PdfExporter&gt;("pdf");
+builder.Services.AddKeyedScoped&lt;IReportExporter, CsvExporter&gt;("csv");     // ➕ CSV = 1 class + 1 line
+
+public class ReportService
+{
+    private readonly IServiceProvider _sp;
+    public ReportService(IServiceProvider sp) =&gt; _sp = sp;
+
+    public Task&lt;byte[]&gt; ExportAsync(string format, ReportData data)
+    {
+        var exporter = _sp.GetKeyedService&lt;IReportExporter&gt;(format.ToLowerInvariant())   // the container finds it by key
+                       ?? throw new BusinessRuleException($"Format {format} not supported");
+        return exporter.ExportAsync(data);
+    }
+}
+
+// controller → service
+[HttpGet("export")]
+public async Task&lt;IActionResult&gt; Export(string format, [FromServices] ReportService reports)
+    =&gt; File(await reports.ExportAsync(format, await LoadDataAsync()), "application/octet-stream");
+
+// gateway always fixed for a class:
+public PayrollController([FromKeyedServices("razorpay")] IPaymentGateway gateway) { ... }</pre>
+          <p>With keyed services the <b>container</b> does the lookup using the key from <code>AddKeyedScoped</code>, so classes don't need a <code>Name</code> property (use one approach, not both). Keys are case-sensitive. <code>GetRequiredKeyedService</code> throws for an unknown key; <code>GetKeyedService</code> returns null so you can throw a 400. Injecting <code>IServiceProvider</code> is the Service Locator pattern: fine inside one small "picker" service, a smell elsewhere.</p>
+        </div>
+        <div class="add"><span class="tag">Send to ALL channels</span>
+<pre class="cs">public interface INotificationChannel { Task SendAsync(int employeeId, string message); }
+builder.Services.AddScoped&lt;INotificationChannel, EmailChannel&gt;();
+builder.Services.AddScoped&lt;INotificationChannel, SmsChannel&gt;();      // Teams later: 1 class + 1 line
+
+public class PayslipNotifier
+{
+    private readonly IEnumerable&lt;INotificationChannel&gt; _channels;
+    public PayslipNotifier(IEnumerable&lt;INotificationChannel&gt; channels) =&gt; _channels = channels;
+
+    public async Task NotifyAsync(int employeeId)
+    {
+        foreach (var channel in _channels)
+            await channel.SendAsync(employeeId, "Your payslip is ready");
+    }
+}</pre>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>ASP.NET Core feature</th><th>How it's OCP</th></tr></thead>
+          <tbody>
+            <tr><td>Middleware</td><td><code>app.UseMiddleware&lt;X&gt;()</code>; framework code never edited</td></tr>
+            <tr><td>Action filters</td><td>Behaviour around actions without touching them</td></tr>
+            <tr><td>Decorator (ch 20)</td><td>Caching around a repository without editing it</td></tr>
+            <tr><td>HttpClient handlers</td><td>Retry/logging via <code>AddHttpMessageHandler</code></td></tr>
+            <tr><td><code>IEntityTypeConfiguration&lt;T&gt;</code></td><td>One config class per entity; DbContext unchanged</td></tr>
+          </tbody>
+        </table></div>
+        <div class="qa"><div class="label">Interview · OCP</div>
+          <details><summary>What is the Open/Closed Principle?</summary><div class="a"><p>A class should be open for extension but closed for modification: new behaviour comes in as new classes, not edits to tested code. Instead of a growing if/else per role, I use an IBonusRule interface with one class per role.</p></div></details>
+          <details><summary>How do you apply OCP in ASP.NET Core?</summary><div class="a"><p>Interface, one class per variant, register them all in DI and inject IEnumerable of the interface (or use .NET 8 keyed services). A new payment gateway is a new class plus one registration line; existing code can't break.</p></div></details>
+          <details><summary>Two classes are registered for one interface. Which one gets injected?</summary><div class="a"><p>The last one registered. Inject IEnumerable to get all of them, or use keyed services with FromKeyedServices to pick one.</p></div></details>
+          <details><summary>Should every class follow OCP?</summary><div class="a"><p>No. Pluggability adds interfaces and indirection. I use it where variation is real or expected; a fixed two-branch if stays an if.</p></div></details>
+        </div>
       </article>
 
       <article class="principle" id="lsp">
