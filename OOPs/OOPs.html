@@ -3832,6 +3832,137 @@ foreach (var e in staff.OfType&lt;IHasPaidLeave&gt;())
     total += e.PaidLeaveDays();</pre></div>
         </div>
         <p class="ans"><b>Say it:</b> "If a subclass throws NotImplementedException or ignores the parent's rules, the hierarchy is wrong. The classic example is Square inheriting Rectangle: setting the width also changes the height, which breaks code written for Rectangle."</p>
+
+        <h4>Simple version · the substitute driver</h4>
+        <p>The company car can be driven by any employee with a licence. If a "substitute" can't drive, he isn't a substitute. Same in code: any child must work everywhere the parent works, with no surprises. The <code>Contractor</code> example above is the classic case.</p>
+        <div class="note key"><span class="tag">4 rules a child must keep</span><p><b>No new exceptions</b> (no <code>NotImplementedException</code>), <b>no stricter input</b>, <b>no weaker output</b> (no null where the parent never returns null), <b>no silent no-op</b>. Repeated <code>is SomeChild</code> checks in callers are the smell that tells you LSP is broken.</p></div>
+        <div class="add"><span class="tag">Example · printing documents (quiz answer)</span>
+<pre class="cs">public abstract class Document
+{
+    public string Title { get; init; } = "";
+    public string Read() =&gt; $"Reading {Title}";
+}
+public interface IPrintable { void Print(); }      // the ability that not every document has
+
+public class Invoice        : Document, IPrintable { public void Print() =&gt; Console.WriteLine("Printing..."); }
+public class Payslip        : Document, IPrintable { public void Print() =&gt; Console.WriteLine("Printing..."); }
+public class SecretDocument : Document { }         // can't print, so it simply doesn't promise to
+
+foreach (var d in docs.OfType&lt;IPrintable&gt;()) d.Print();   // SecretDocument never reaches Print()</pre>
+          <p>Move <b>the method the child can't do</b> out of the base class into an interface. Here that's <code>Print()</code>, so only printable documents promise it.</p>
+        </div>
+        <div class="add"><span class="tag">Example · refunds (quiz answer)</span>
+<pre class="cs">// ❌ smell: the caller has to know which child it got
+if (payment is CashPayment cash) cash.Refund();
+
+// ✅ name the interface after the ability, not the type
+public interface IRefundable { void Refund(); }
+public class CashPayment : Payment, IRefundable { public void Refund() { ... } }
+public class CardPayment : Payment, IRefundable { public void Refund() { ... } }
+public class GiftVoucher : Payment { }             // not refundable, no fake Refund()
+
+if (payment is IRefundable r) r.Refund();</pre>
+          <p>Name interfaces after the <b>ability</b> (<code>IRefundable</code>), not the type (<code>ICashPayment</code>): a new refundable payment then needs no caller changes.</p>
+        </div>
+
+        <h4>Enterprise version · quiet breaks</h4>
+        <p>In real projects LSP rarely breaks with an obvious throw. It breaks quietly: a wrong answer, a hidden null, a swallowed error.</p>
+        <div class="add"><span class="tag">Interview classic · Rectangle and Square</span>
+<pre class="cs">public class Rectangle
+{
+    public virtual int Width  { get; set; }
+    public virtual int Height { get; set; }
+    public int Area =&gt; Width * Height;
+}
+public class Square : Rectangle
+{
+    public override int Width  { set { base.Width = base.Height = value; } }
+    public override int Height { set { base.Width = base.Height = value; } }
+}
+
+void Resize(Rectangle r) { r.Width = 5; r.Height = 10; Console.WriteLine(r.Area); }
+Resize(new Rectangle());
+Resize(new Square());</pre>
+<pre class="out">50
+100     ← no exception, just a wrong answer</pre>
+          <p>Rectangle promises width and height change <b>independently</b>. Square has the same properties but they <b>behave differently</b>, so it can't keep that promise. "Is-a" must mean <b>behaves like</b>. Fix: don't inherit, share the ability.</p>
+<pre class="cs">public interface IShape { int Area { get; } }
+public record Rectangle(int Width, int Height) : IShape { public int Area =&gt; Width * Height; }
+public record Square(int Side)                 : IShape { public int Area =&gt; Side * Side; }</pre>
+        </div>
+        <div class="add"><span class="tag">The read-only repository trap</span>
+<pre class="cs">// ❌ one fat contract
+public class EmployeeReportRepository : IRepository&lt;EmployeeReport&gt;
+{
+    public Task&lt;EmployeeReport?&gt; GetAsync(int id) =&gt; ...;               // reads a DB view
+    public Task AddAsync(EmployeeReport item) =&gt; throw new NotSupportedException();
+    public Task DeleteAsync(int id)           =&gt; throw new NotSupportedException();
+}
+
+// ✅ split by ability (leads straight into ISP)
+public interface IReadRepository&lt;T&gt;  { Task&lt;T?&gt; GetAsync(int id); }
+public interface IWriteRepository&lt;T&gt; { Task AddAsync(T item); Task DeleteAsync(int id); }
+
+public class EmployeeRepository       : IReadRepository&lt;Employee&gt;, IWriteRepository&lt;Employee&gt; { ... }
+public class EmployeeReportRepository : IReadRepository&lt;EmployeeReport&gt; { ... }</pre>
+          <p>Generic code taking <code>IRepository&lt;T&gt;</code> crashes on the report repository. After the split, the compiler stops anyone calling <code>DeleteAsync</code> on reports.</p>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>Quiet break</th><th>Child does</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Stricter input</td><td>rejects input the parent accepts</td><td>SMS sender throws over 160 characters</td></tr>
+            <tr><td>Weaker output</td><td>returns null</td><td>Cached service returns null on a miss</td></tr>
+            <tr><td>Swallowing errors</td><td>does nothing on failure</td><td><code>catch { }</code>; caller thinks it worked</td></tr>
+            <tr><td>Not implemented</td><td>throws</td><td><code>NotImplementedException</code> left in production</td></tr>
+            <tr><td>Changed side effects</td><td>does extra work</td><td><code>Save()</code> also sends an email</td></tr>
+          </tbody>
+        </table></div>
+        <p>Test: <b>can I swap in the child without reading its code?</b> If the caller must know which child it got, LSP is broken.</p>
+        <div class="add"><span class="tag">Fix · SMS length (quiz answer)</span>
+<pre class="cs">// ❌ stricter input: the interface accepts any message
+if (message.Length &gt; 160) throw new ArgumentException("Too long");
+
+// ✅ Fix 1: accept everything the parent accepts
+public async Task SendAsync(string to, string message)
+{
+    foreach (var part in message.Chunk(160))
+        await _sms.SendAsync(to, new string(part));
+}
+
+// ✅ Fix 2: put the limit in the contract so callers can see it
+public interface INotificationSender
+{
+    int? MaxLength { get; }                 // null = no limit
+    Task SendAsync(string to, string message);
+}</pre>
+          <p>Don't quietly cut the message at 160 characters: that turns stricter input into a silent change in output.</p>
+        </div>
+        <div class="add"><span class="tag">Fix · cached service (quiz answer)</span>
+<pre class="cs">// ❌ returns null (weaker output) AND catch {} hides every failure
+try { return await _cache.GetAsync(id); } catch { return null!; }
+
+// ✅ behaves like the real service: miss or failure falls back to it
+public async Task&lt;Employee&gt; GetAsync(int id)
+{
+    try
+    {
+        var cached = await _cache.GetAsync(id);
+        if (cached is not null) return cached;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogWarning(ex, "Cache failed for {Id}", id);
+    }
+    return await _inner.GetAsync(id);
+}</pre>
+        </div>
+        <div class="note fix"><span class="tag">LSP inside .NET itself</span><p><code>ReadOnlyCollection&lt;T&gt;</code> (.NET 2.0) implements <code>ICollection&lt;T&gt;</code>, and its <code>Add</code> throws <code>NotSupportedException</code>. Back then there was no read-only interface, so Microsoft documented the throw in the parent contract via <code>IsReadOnly</code>. <code>IReadOnlyList&lt;T&gt;</code> / <code>IReadOnlyCollection&lt;T&gt;</code> came later (.NET 4.5) as the proper fix. Arrays have the same issue: <code>int[]</code> implements <code>IList&lt;int&gt;</code> but <code>Add</code> throws. In your own code, return <code>IReadOnlyList&lt;T&gt;</code>.</p></div>
+        <div class="qa"><div class="label">Interview · LSP</div>
+          <details><summary>What is the Liskov Substitution Principle?</summary><div class="a"><p>A subtype must be usable anywhere its parent is, with no surprises: it accepts at least the same inputs, gives at least the same guarantees on output, and throws no new exceptions.</p></div></details>
+          <details><summary>Why does Square inheriting Rectangle break LSP?</summary><div class="a"><p>Rectangle promises width and height change independently. Square can't keep that promise, so code that sets width 5 and height 10 gets 100 instead of 50, silently. I'd have both implement an IShape interface instead.</p></div></details>
+          <details><summary>How do you spot an LSP violation in a code review?</summary><div class="a"><p>NotImplementedException or NotSupportedException in an override, type checks on child classes in the caller, overrides that return null, add validation, or swallow errors. The fix is usually to split the base class or interface by ability.</p></div></details>
+          <details><summary>Is ReadOnlyCollection throwing on Add an LSP violation?</summary><div class="a"><p>Yes, a known compromise. ICollection was the only option in .NET 2.0, so Microsoft documented the throw through IsReadOnly. In .NET 4.5 they added IReadOnlyList, the proper interface-segregation fix, and that's what I return in my own code.</p></div></details>
+        </div>
       </article>
 
       <article class="principle" id="isp">
