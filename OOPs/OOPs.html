@@ -3994,6 +3994,106 @@ public class Developer : IWorker, ICoder { ... }
 public class Manager   : IWorker, IApprover, IInterviewer { ... }</pre></div>
         </div>
         <p class="ans"><b>Say it:</b> "Clients should depend only on what they use. I split fat repositories into IReadRepository and IWriteRepository, for example, so reporting code can't write."</p>
+
+        <h4>Simple version · the TV remote</h4>
+        <p>One remote with 60 buttons for the TV, AC, washing machine and garage door is confusing. A <b>small remote per device</b> is better: each person holds only the buttons they use. Same in code: many small interfaces, one per ability.</p>
+        <div class="note key"><span class="tag">LSP vs ISP</span><p><b>LSP:</b> a child must keep what the parent promises. <b>ISP:</b> don't force a class to promise what it can't do. A fat interface is usually <i>why</i> LSP breaks: the class is forced to write throwing or empty methods.</p></div>
+        <div class="add"><span class="tag">Example · printer (quiz answer)</span>
+<pre class="cs">// ❌ fat: BasicPrinter is forced into empty (silent no-op) methods
+public interface IPrinterMachine { void Print(string doc); void Scan(string doc); void Fax(string doc); }
+public class BasicPrinter : IPrinterMachine
+{
+    public void Print(string doc) =&gt; Console.WriteLine("Printing");
+    public void Scan(string doc)  { }
+    public void Fax(string doc)   { }
+}
+
+// ✅ one interface per ability
+public interface IPrinter { void Print(string doc); }
+public interface IScanner { void Scan(string doc); }
+public interface IFax     { void Fax(string doc); }
+
+public class BasicPrinter  : IPrinter { public void Print(string doc) =&gt; Console.WriteLine("Printing"); }
+public class OfficeMachine : IPrinter, IScanner, IFax { ... }      // all-in-one implements all three
+public class InvoiceService(IPrinter printer) { ... }              // asks only for what it needs</pre>
+          <p>Show who implements what: the benefit is that <code>BasicPrinter</code> no longer has empty <code>Scan</code>/<code>Fax</code>. Empty <code>{ }</code> methods are silent no-ops; the caller thinks the scan worked.</p>
+        </div>
+        <div class="add"><span class="tag">Don't over-split (quiz answer)</span>
+<pre class="cs">// ❌ overdone: IGetEmployee, IAddEmployee, IUpdateEmployee, IDeleteEmployee, IGetAllEmployees
+// ✅ split by who uses it
+public interface IEmployeeReader { Task&lt;Employee?&gt; GetAsync(int id); Task&lt;List&lt;Employee&gt;&gt; GetAllAsync(); }
+public interface IEmployeeWriter { Task AddAsync(Employee e); Task UpdateAsync(Employee e); Task DeleteAsync(int id); }
+public interface IEmployeeRepository : IEmployeeReader, IEmployeeWriter { }   // full one still available</pre>
+          <p>One interface per method is overdone. Split by <b>who uses it</b>: group methods that are always used together, and split only when a real class or consumer needs part of it.</p>
+        </div>
+
+        <h4>Enterprise version · fat services, CQRS-lite, DI forwarding</h4>
+        <p>Fat interfaces grow slowly: every sprint someone adds "just one more method" to the same service.</p>
+<pre class="cs">public interface IEmployeeService            // 2 years later...
+{
+    Task&lt;Employee?&gt; GetAsync(int id);
+    Task&lt;List&lt;Employee&gt;&gt; SearchAsync(string name);
+    Task AddAsync(Employee e);
+    Task UpdateSalaryAsync(int id, decimal salary);
+    Task ApproveLeaveAsync(int requestId);
+    Task&lt;byte[]&gt; ExportPayslipPdfAsync(int id, int month);
+    // ...15 more
+}
+public class ReportsController(IEmployeeService service) { ... }   // only uses SearchAsync
+
+// ✅ split by who uses it
+public interface IEmployeeQueries  { Task&lt;Employee?&gt; GetAsync(int id); Task&lt;List&lt;Employee&gt;&gt; SearchAsync(string name); }
+public interface IEmployeeCommands { Task AddAsync(Employee e); Task UpdateSalaryAsync(int id, decimal salary); }
+public interface ILeaveApprovals   { Task ApproveLeaveAsync(int requestId); }
+public interface IPayslipExporter  { Task&lt;byte[]&gt; ExportPdfAsync(int id, int month); }
+
+public class ReportsController(IEmployeeQueries queries) { ... }   // read-only, compiler-enforced</pre>
+        <div class="note fix"><span class="tag">3 problems with the fat version</span><p><b>Testing:</b> you mock 20 methods and must read the code to know which matter. <b>Coupling:</b> changing one method touches every class that depends on the interface. <b>Hidden power:</b> the reports controller <i>can</i> call <code>UpdateSalaryAsync</code>; with <code>IEmployeeQueries</code> the compiler blocks it.</p></div>
+        <div class="add"><span class="tag">CQRS-lite = ISP on reads and writes</span><p>CQRS is <b>Command Query Responsibility Segregation</b>. Queries return data and change nothing (cacheable, <code>AsNoTracking()</code>, read replica); commands change data (validation, transactions, audit). CQRS is one application of ISP, not the other way round. Full CQRS (separate models, MediatR, separate databases) is a bigger step for when reads and writes really differ.</p></div>
+        <div class="add"><span class="tag">One class, many interfaces: the DI trap</span>
+<pre class="cs">// ❌ two separate objects in the SAME request
+builder.Services.AddScoped&lt;IEmployeeReader, EmployeeRepository&gt;();
+builder.Services.AddScoped&lt;IEmployeeWriter, EmployeeRepository&gt;();
+
+// ✅ register once, forward both interfaces to the same instance
+builder.Services.AddScoped&lt;EmployeeRepository&gt;();
+builder.Services.AddScoped&lt;IEmployeeReader&gt;(sp =&gt; sp.GetRequiredService&lt;EmployeeRepository&gt;());
+builder.Services.AddScoped&lt;IEmployeeWriter&gt;(sp =&gt; sp.GetRequiredService&lt;EmployeeRepository&gt;());</pre>
+<pre class="out">Request 1:  IEmployeeReader ─┐
+                             ├──► EmployeeRepository #1   (one object)
+            IEmployeeWriter ─┘
+Request 2:  both ───────────────► EmployeeRepository #2</pre>
+          <p>The factory doesn't call <code>new</code>; it asks the container for <code>EmployeeRepository</code>, which is scoped, so both interfaces get the same instance for the whole request. This matters when the repository holds state (unit of work, cache).</p>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>.NET interface</th><th>Why it's small</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDisposable</code></td><td>One method: anything can add cleanup without baggage</td></tr>
+            <tr><td><code>IEnumerable</code> → <code>ICollection</code> → <code>IList</code></td><td>Layers: loop, then count/add, then index</td></tr>
+            <tr><td><code>IReadOnlyList&lt;T&gt;</code></td><td>The read-only half; <code>IList&lt;T&gt;</code> was too fat</td></tr>
+            <tr><td><code>ILogger&lt;T&gt;</code></td><td>Logging only, no config or pipeline</td></tr>
+            <tr><td><code>IComparable&lt;T&gt;</code>, <code>IEquatable&lt;T&gt;</code></td><td>One ability each</td></tr>
+          </tbody>
+        </table></div>
+        <div class="add"><span class="tag">Accept the smallest, return the most useful</span>
+<pre class="cs">public int CountActive(IEnumerable&lt;Employee&gt; employees)   // ✅ accepts List, array, LINQ result
+    =&gt; employees.Count(e =&gt; e.IsActive);
+
+public int CountActive(List&lt;Employee&gt; employees)          // ❌ forces callers to build a List</pre>
+          <p><code>Count(predicate)</code> is LINQ and works on any <code>IEnumerable&lt;T&gt;</code>, so asking for more forces callers to convert.</p>
+        </div>
+        <div class="add"><span class="tag">Why testers love ISP</span>
+<pre class="cs">var queries = new Mock&lt;IEmployeeQueries&gt;();
+queries.Setup(q =&gt; q.SearchAsync("Ravi")).ReturnsAsync(new List&lt;Employee&gt; { new() { Name = "Ravi" } });
+var controller = new ReportsController(queries.Object);   // 2-method mock, obvious what's used</pre>
+        </div>
+        <div class="qa"><div class="label">Interview · ISP</div>
+          <details><summary>What is the Interface Segregation Principle?</summary><div class="a"><p>Don't make one big interface that forces classes to write methods they don't use. Make small interfaces, one per ability: a Developer implements ICoder, a Manager implements ILeaveApprover, and nobody writes empty or throwing methods.</p></div></details>
+          <details><summary>How do you apply ISP in a real Web API?</summary><div class="a"><p>I split services by who uses them, usually reads versus writes. Controllers get only what they need, the compiler blocks misuse, mocks are tiny, and a change in one area doesn't ripple into unrelated classes.</p></div></details>
+          <details><summary>What's the connection between ISP and CQRS?</summary><div class="a"><p>CQRS applies ISP to reads and writes: query interfaces only read, command interfaces only change data. So CQRS is ISP at the service level.</p></div></details>
+          <details><summary>One class implements two interfaces. How do you register it in DI?</summary><div class="a"><p>Register the concrete class once, then register each interface with a factory that resolves the concrete class, so both share one scoped instance. Two plain AddScoped calls would create two objects per request.</p></div></details>
+          <details><summary>Can you take ISP too far?</summary><div class="a"><p>Yes. One method per interface adds noise. I split by real consumers, not by method.</p></div></details>
+        </div>
       </article>
 
       <article class="principle" id="dip">
